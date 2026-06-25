@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -57,7 +56,7 @@ orders_by_state = {
     "BA": 3380,
 }
 
-print(f"States tracked: {len(orders_by_state)}")
+print(f"States tracked: {orders_by_state.keys()}")
 print(f"Total orders across these states: {sum(orders_by_state.values()):,}")
 
 # COMMAND ----------
@@ -141,10 +140,12 @@ for status in order_statuses:
 
 attempts = 0
 max_attempts = 3
-while attempts < max_attempts:
-    print(f"Attempt {attempts + 1}: connecting to data source...")
-    attempts += 1
-print("Done.")
+def connect_to_data_source(max_attempts: int = 3):
+    for attempt in range(max_attempts):
+        print(f"Attempt {attempt + 1}: connecting to data source...")
+    print("Done.")
+
+connect_to_data_source(max_attempts)
 
 # COMMAND ----------
 
