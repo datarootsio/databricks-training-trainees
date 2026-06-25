@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -28,6 +27,15 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+from pyspark.sql import functions as F
+
+orders = spark.table("training_luc_chevre.landing.orders")
+order_items = spark.table("training_luc_chevre.landing.order_items")
+customers = spark.table("training_luc_chevre.landing.customers")
+products = spark.table("training_luc_chevre.landing.products")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Question 1: Order Status Distribution
 # MAGIC
@@ -40,8 +48,14 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+(
+orders.groupBy("order_status").count()
+.select("order_status")
+.agg(F.count(F.lit(1)).alias("count"))
+.display()
+)
+
+
 
 # COMMAND ----------
 
@@ -59,8 +73,12 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Calculate the average delivery time in days across all delivered orders
+# MAGIC -- your code here
+# MAGIC SELECT avg(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) as avg_delivery_time
+# MAGIC FROM training_luc_chevre.bronze.orders
+# MAGIC WHERE order_delivered_customer_date is not null
 
 # COMMAND ----------
 
@@ -78,8 +96,16 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Top 10 product categories by total revenue
+# MAGIC -- your code here
+# MAGIC SELECT product_category_name, sum(price) as total_revenue
+# MAGIC FROM training_luc_chevre.bronze.order_items
+# MAGIC JOIN training_luc_chevre.bronze.products
+# MAGIC ON order_items.product_id = products.product_id
+# MAGIC GROUP BY product_category_name
+# MAGIC ORDER BY total_revenue DESC
+# MAGIC LIMIT 10
 
 # COMMAND ----------
 
@@ -95,8 +121,15 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Distribution of review scores — count per score value
+# MAGIC -- your code here
+# MAGIC
+# MAGIC SELECT review_score, count(*) as count_review
+# MAGIC FROM training_luc_chevre.landing.order_reviews
+# MAGIC where try_cast(review_score as int) between 0 and 5
+# MAGIC GROUP BY review_score
+# MAGIC ORDER BY count_review DESC
 
 # COMMAND ----------
 
@@ -119,8 +152,18 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Late delivery rate per customer state, sorted by highest rate first
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Late delivery rate per customer state, sorted by highest rate first
+# MAGIC -- your code here
+# MAGIC SELECT customers.customer_state, sum(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) * 100 / count(*) as is_late
+# MAGIC from training_luc_chevre.landing.customers 
+# MAGIC JOIN training_luc_chevre.landing.orders 
+# MAGIC on customers.customer_id = orders.customer_id
+# MAGIC where order_status = 'delivered'
+# MAGIC group by customers.customer_state
+# MAGIC order by is_late desc
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -138,5 +181,16 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Most popular payment type per customer state
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Most popular payment type per customer state
+# MAGIC -- your code here
+# MAGIC
+# MAGIC SELECT count(payment_type) as count_payment, customer_state, payment_type
+# MAGIC from training_luc_chevre.landing.orders
+# MAGIC join training_luc_chevre.landing.customers
+# MAGIC on orders.customer_id = customers.customer_id
+# MAGIC join training_luc_chevre.landing.order_payments
+# MAGIC on orders.order_id = order_payments.order_id
+# MAGIC group by customer_state, payment_type
+# MAGIC order by customer_state, payment_type
+# MAGIC

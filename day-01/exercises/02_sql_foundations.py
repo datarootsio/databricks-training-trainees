@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -17,14 +16,16 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 2
 # Reminder: replace <name> with your own name in the cell below before running it.
-# Example: USE CATALOG `training_anna`;
+# Example: USE CATALOG `training_luc_chevre`;
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_luc_chevre`;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -59,6 +60,11 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT *
+# MAGIC FROM orders
+# MAGIC WHERE order_status = 'canceled'
+# MAGIC order by order_purchase_timestamp desc
+# MAGIC ;
 
 # COMMAND ----------
 
@@ -92,6 +98,17 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   payment_type,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment_value
+# MAGIC FROM
+# MAGIC   order_payments
+# MAGIC GROUP BY
+# MAGIC   payment_type
+# MAGIC ORDER BY
+# MAGIC   avg_payment_value DESC
+# MAGIC -- TODO C: average payment value per payment_type, rounded to 2 decimals, for transactions with a payment_value greater than 100
+# MAGIC --       
 
 # COMMAND ----------
 
@@ -127,6 +144,14 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS order_item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY
+# MAGIC   product_id
+# MAGIC HAVING COUNT(*) > 100
+# MAGIC ORDER BY order_item_count DESC
 
 # COMMAND ----------
 
@@ -169,6 +194,18 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   o.order_id,
+# MAGIC   o.order_status,
+# MAGIC   i.order_id,
+# MAGIC   i.product_id,
+# MAGIC   p.product_category_name   ,
+# MAGIC   p.product_description_lenght
+# MAGIC FROM orders o
+# MAGIC JOIN order_items i
+# MAGIC   ON o.order_id = i.order_id
+# MAGIC JOIN products p
+# MAGIC   ON i.product_id = p.product_id
 
 # COMMAND ----------
 
@@ -216,8 +253,27 @@
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC --In the CTE body: computes the average review score per product_id by joining order_reviews with order_items on order_id. Call the CTE --avg_scores and alias the average as avg_score.
+# MAGIC --In the outer query: selects only products where avg_score >= 4.0. Show product_id and avg_score, ordered by avg_score descending.
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC WITH avg_scores AS (
+# MAGIC   SELECT
+# MAGIC     i.product_id,
+# MAGIC     AVG(r.review_score) AS avg_score
+# MAGIC   FROM order_reviews r
+# MAGIC   JOIN order_items i
+# MAGIC     ON r.order_id = i.order_id
+# MAGIC   GROUP BY i.product_id
+# MAGIC )
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   avg_score
+# MAGIC FROM avg_scores
+# MAGIC WHERE avg_score >= 4.0
+# MAGIC ORDER BY avg_score DESC
+# MAGIC
 
 # COMMAND ----------
 
@@ -280,4 +336,14 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC --Steps:
+# MAGIC
+# MAGIC --Use a CTE (or subquery) to compute order_count per customer_unique_id, joined with customers to get customer_state.
+# MAGIC --Apply RANK() OVER (PARTITION BY customer_state ORDER BY order_count DESC) to assign a within-state rank.
+# MAGIC --In the outer query, filter to rank = 1.
+# MAGIC --Show customer_state, customer_unique_id, order_count, and state_rank.
+# MAGIC --Olist gotcha (important): group by customer_unique_id, NOT customer_id. In Olist, customer_id is generated per order (one row per order in --customers), so counting orders by customer_id gives 1 for almost everyone. customer_unique_id is the persistent identity that lets you find --true repeat customers (the busiest has 17 orders).
+# MAGIC
+# MAGIC --Note: RANK() assigns the same rank to ties, so a state may return several rows on a tie.
+# MAGIC
+# MAGIC
