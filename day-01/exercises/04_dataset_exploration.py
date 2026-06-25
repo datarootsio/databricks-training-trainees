@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,10 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC SELECT order_status, count(*) as count
+# MAGIC FROM training_sandro_couto.bronze.orders
+# MAGIC GROUP BY order_status
 
 # COMMAND ----------
 
@@ -59,8 +60,10 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC select AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) as avg_delivery_days
+# MAGIC from training_sandro_couto.bronze.orders
+# MAGIC where order_delivered_customer_date is not null
 
 # COMMAND ----------
 
@@ -78,8 +81,14 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC select p.product_category_name, sum(oi.price) as total_revenue
+# MAGIC from training_sandro_couto.bronze.order_items oi
+# MAGIC join training_sandro_couto.bronze.products p
+# MAGIC on oi.product_id = p.product_id
+# MAGIC group by p.product_category_name
+# MAGIC order by total_revenue desc
+# MAGIC limit 10
 
 # COMMAND ----------
 
@@ -95,8 +104,12 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC select count(*) as count, review_score
+# MAGIC from training_sandro_couto.bronze.order_reviews
+# MAGIC where review_score between 1 and 5
+# MAGIC group by review_score
+# MAGIC order by review_score desc
 
 # COMMAND ----------
 
@@ -119,8 +132,17 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Late delivery rate per customer state, sorted by highest rate first
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Late delivery rate per customer state, sorted by highest rate first
+# MAGIC
+# MAGIC select 
+# MAGIC     c.customer_state,
+# MAGIC     case when o.order_delivered_customer_date > o.order_estimated_delivery_date then 1 else 0 end as is_late
+# MAGIC from training_sandro_couto.bronze.orders o
+# MAGIC join training_sandro_couto.bronze.customers c
+# MAGIC on o.customer_id = c.customer_id
+# MAGIC where o.order_status = "delivered" and o.order_status is not null
+# MAGIC group by c.customer_state, case when o.order_delivered_customer_date > o.order_estimated_delivery_date then 1 else 0 end
 
 # COMMAND ----------
 
@@ -138,5 +160,27 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Most popular payment type per customer state
-# your code here
+# MAGIC %sql
+# MAGIC
+# MAGIC with state_rank as (
+# MAGIC     
+# MAGIC     select ROW_NUMBER() OVER (ORDER BY  DESC) AS rank
+# MAGIC     FROM training_sandro_couto.bronze.customers c
+# MAGIC )
+# MAGIC
+# MAGIC select * from state_rank
+# MAGIC
+# MAGIC /*
+# MAGIC select 
+# MAGIC     count(op.payment_type) as payment_type_count, 
+# MAGIC     c.customer_state,
+# MAGIC     ROW_NUMBER() OVER (ORDER BY customer_state DESC) AS state_rank
+# MAGIC from training_sandro_couto.bronze.orders o 
+# MAGIC join training_sandro_couto.bronze.order_payments op
+# MAGIC on o.order_id = op.order_id
+# MAGIC join training_sandro_couto.bronze.customers c
+# MAGIC on o.customer_id = c.customer_id
+# MAGIC --where state_rank = 1
+# MAGIC group by c.customer_state, state_rank
+# MAGIC order by payment_type_count desc
+# MAGIC limit 1*/

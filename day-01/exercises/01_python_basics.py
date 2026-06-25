@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -63,8 +62,16 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 #         1. Print the full dict.
 #         2. Print the number of states using len().
 
-# YOUR CODE HERE
+orders_by_state = {
+    "SP": 15,
+    "RJ": 47329,
+    "MG": 2649,
+    "BA": 38,
+    "RS": 382
+}
 
+print(orders_by_state)
+print(len(orders_by_state.keys()))
 
 # COMMAND ----------
 
@@ -118,8 +125,22 @@ print(f"Delivery took {days} days")
 #       1, 3, and 5, printing each result in the format:
 #           "Score 1 -> negative"
 
-# YOUR CODE HERE
-
+def categorize_review_score(score) -> int:
+    if score == 1 or score == 2:
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    elif score == 4 or score == 5:
+        return "positive"
+    else:
+        return "none"
+    
+print(categorize_review_score(1))
+print(categorize_review_score(2))
+print(categorize_review_score(3))
+print(categorize_review_score(4))
+print(categorize_review_score(5))
+print(categorize_review_score(6))
 
 # COMMAND ----------
 
@@ -186,7 +207,9 @@ state_order_counts = {
 }
 
 # YOUR CODE HERE
-
+for state, count in state_order_counts.items():
+    if count > 1000:
+        print(f"{state}: {state_order_counts[state]} orders")
 
 # COMMAND ----------
 
@@ -224,7 +247,12 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
 # YOUR CODE HERE
-
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+print(f"Average: {avg_score}")
+print(f"Max: {max_score}")
 
 # COMMAND ----------
 
@@ -293,4 +321,7 @@ state_revenue = {
 }
 
 # YOUR CODE HERE
+def top_states_by_revenue(state_revenue_dict, n=3):
+    return sorted(state_revenue_dict.items(), reverse=True)[:3]
 
+print(top_states_by_revenue(state_revenue))
