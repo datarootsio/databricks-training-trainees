@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 02 — SQL Foundations
 # MAGIC
@@ -19,8 +18,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_julien_schneider`;
+# MAGIC USE SCHEMA bronze;
 # MAGIC -- Replace <name> with your own name (e.g., training_jan).
 
 # COMMAND ----------
@@ -87,6 +86,7 @@
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC EXPLAIN
 # MAGIC SELECT
 # MAGIC   payment_type,
 # MAGIC   COUNT(*) AS payment_count,

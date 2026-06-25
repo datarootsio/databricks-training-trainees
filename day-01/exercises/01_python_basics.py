@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -63,7 +62,17 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 #         1. Print the full dict.
 #         2. Print the number of states using len().
 
-# YOUR CODE HERE
+order_state = {
+    "SP": 45000,
+    "RJ": 13000,
+    "MG": 12000,
+    "RS": 6500,
+    "PR": 5800,
+    "SC": 3200,
+    "BA": 3100,}
+
+print("Order state:", order_state)
+print("Number of states:", len(order_state))
 
 
 # COMMAND ----------
@@ -120,6 +129,19 @@ print(f"Delivery took {days} days")
 
 # YOUR CODE HERE
 
+def categorize_review_score(score):
+    if score == 1 or score == 2:
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    elif score == 4 or score == 5:
+        return "positive"
+    else:
+        return "unknown"
+
+print(f"Score 1 -> {categorize_review_score(1)}")
+print(f"Score 3 -> {categorize_review_score(3)}")
+print(f"Score 5 -> {categorize_review_score(5)}")
 
 # COMMAND ----------
 
@@ -187,6 +209,10 @@ state_order_counts = {
 
 # YOUR CODE HERE
 
+for state, count in state_order_counts.items():
+    if count > 1000:
+        print(f"{state}: {count} orders")
+
 
 # COMMAND ----------
 
@@ -223,7 +249,15 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
-# YOUR CODE HERE
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+
+print(f"Average: {avg_score}")
+print(f"Max: {max_score}")
+print(f"Min: {min_score}")
+print(f"Sorted: {sorted_scores}")
 
 
 # COMMAND ----------
@@ -292,5 +326,11 @@ state_revenue = {
     "GO": 345_670.80,
 }
 
-# YOUR CODE HERE
+def top_states_by_revenue(state_revenue_dict, n=3):
+    return sorted(state_revenue_dict.items(), key=lambda x: x[1], reverse=True)[:n]
+
+top_states = top_states_by_revenue(state_revenue)
+print(top_states)
+# --- Example: product category counts ---
+
 
