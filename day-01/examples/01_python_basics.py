@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -35,6 +34,12 @@ status_descriptions = {
     "canceled": "Order was canceled before delivery",
 }
 
+status_sth = {
+    "training": [1,2,3,4],
+    "databricks": 102,
+    "python": "awesome",
+}
+
 print(f"order_count       {order_count!r:<12} -> {type(order_count).__name__}")
 print(f"avg_order_value   {avg_order_value!r:<12} -> {type(avg_order_value).__name__}")
 print(f"current_status    {current_status!r:<12} -> {type(current_status).__name__}")
@@ -57,8 +62,8 @@ orders_by_state = {
     "BA": 3380,
 }
 
-print(f"States tracked: {len(orders_by_state)}")
-print(f"Total orders across these states: {sum(orders_by_state.values()):,}")
+print(f"States tracked: {len(orders_by_state.keys())}")
+print(f"Total orders across these states: {sum(orders_by_state.values())}")
 
 # COMMAND ----------
 
@@ -89,7 +94,7 @@ def compute_delivery_days(
     return (delivered - purchased).days
 
 
-days = compute_delivery_days("2017-10-02 10:56:33", "2017-10-12 18:30:00")
+days = compute_delivery_days(order_purchase="2017-10-02 10:56:33", order_delivered="2017-10-12 18:30:00")
 print(f"Delivery took {days} days")
 
 # COMMAND ----------
@@ -102,16 +107,18 @@ print(f"Delivery took {days} days")
 
 def categorize_review_score(score: int) -> str:
     """Bucket a review score (1-5) into 'negative', 'neutral', or 'positive'."""
-    if score <= 2:
+    if score < 1 or score > 5:
+        raise Exception(f"Invalid score: {score}. Expected 1-5")
+    elif score <= 2:
         return "negative"
     elif score == 3:
         return "neutral"
-    else:  # 4 or 5
+    else:
         return "positive"
 
 
-for s in [1, 3, 5]:
-    print(f"Score {s} -> {categorize_review_score(s)}")
+for score in [1, 3, 5, 10]:
+    print(f"Score {score} -> {categorize_review_score(score)}")
 
 # COMMAND ----------
 
@@ -122,6 +129,7 @@ for s in [1, 3, 5]:
 
 # COMMAND ----------
 
+order_statuses = ["delivered", "shipped", "canceled", "processing", "unavailable"]
 for status in order_statuses:
     if status == "delivered":
         print(f"[OK]      '{status}' — no action needed.")
@@ -167,9 +175,9 @@ state_order_counts = {
 }
 
 print("States with more than 1000 orders:")
-for state, count in state_order_counts.items():
-    if count > 1000:
-        print(f"  {state}: {count:,} orders")
+for s, c in state_order_counts.items():
+    if c > 1000:
+        print(f"  {s}: {c:,} orders")
 
 # COMMAND ----------
 
@@ -250,7 +258,15 @@ print("\nTop 3 categories:", top3)
 
 
 def top_states_by_revenue(state_revenue: dict, n: int = 3) -> list:
-    """Return the top-n states by revenue, sorted descending, as (state, revenue) tuples."""
+    """Return the top-n states by revenue, sorted descending, as (state, revenue) tuples.
+    
+    Args:
+        state_revenue (dict): A dictionary mapping state names to their respective revenues.
+        n (int): The number of top states to return.
+        
+    Returns:
+        list: A list of (state, revenue) tuples, sorted descending by revenue.
+    """
     return sorted(state_revenue.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
@@ -265,6 +281,36 @@ state_revenue = {
 print("Top 3 states by revenue:")
 for rank, (state, revenue) in enumerate(top_states_by_revenue(state_revenue), start=1):
     print(f"  #{rank} {state}: R$ {revenue:,.2f}")
+
+# COMMAND ----------
+
+# DBTITLE 1,Median of a list
+import numpy as np
+
+
+def calculate_median(values: list) -> float:
+    """Return the median of a numeric list using numpy.
+
+    Args:
+        values: A non-empty list of numeric values.
+    Returns:
+        The median value as a float.
+    Raises:
+        ValueError: If the list is empty.
+    """
+    if not values:
+        raise ValueError("Cannot compute median of an empty list.")
+    return float(np.median(values))
+
+
+# Odd-length list
+print(f"Median of review_scores {review_scores}: {calculate_median(review_scores)}")
+
+# Even-length list
+print(f"Median of order_values  {order_values}: {calculate_median(order_values):.2f}")
+
+# Edge case — single element
+print(f"Median of [42]: {calculate_median([42])}")
 
 # COMMAND ----------
 
