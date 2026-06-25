@@ -48,7 +48,11 @@ orders.filter(F.col("order_status") == "delivered") \
 # COMMAND ----------
 
 # TODO: Using PySpark, filter orders to only 'shipped' status and show order_id and order_purchase_timestamp
-# your code here
+#
+orders.filter(F.col("order_status") == "shipped") \
+    .select("order_id") \
+    .limit(10) \
+    .display()
 
 # COMMAND ----------
 
