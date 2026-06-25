@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,8 +22,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_marlene_mezzi`;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -59,6 +58,17 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC -- Example: most recent delivered orders
+# MAGIC SELECT
+# MAGIC   order_id,
+# MAGIC   --customer_id,
+# MAGIC   --order_status,
+# MAGIC   order_purchase_timestamp
+# MAGIC FROM orders
+# MAGIC WHERE order_status = 'canceled'
+# MAGIC ORDER BY order_purchase_timestamp DESC
+# MAGIC LIMIT 10;
 
 # COMMAND ----------
 
@@ -92,6 +102,12 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT payment_type,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment_value
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type
+# MAGIC ORDER BY avg_payment_value DESC
+# MAGIC  
 
 # COMMAND ----------
 
@@ -127,6 +143,10 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC select product_id, COUNT(*) as item_count
+# MAGIC from order_items
+# MAGIC group by product_id
+# MAGIC HAVING COUNT(*) > 100
 
 # COMMAND ----------
 
@@ -169,6 +189,8 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT o.order_id,p.product_category_name,oi.price FROM orders o join order_items oi on o.order_id = oi.order_id  JOIN products p ON oi.product_id = p.product_id 
+# MAGIC LIMIT 20
 
 # COMMAND ----------
 
@@ -218,6 +240,18 @@
 # MAGIC %sql
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
+# MAGIC WITH avg_scores AS(
+# MAGIC     SELECT
+# MAGIC       product_id,
+# MAGIC       AVG(review_score) AS avg_score
+# MAGIC       FROM order_reviews 
+# MAGIC       JOIN order_items
+# MAGIC       ON order_reviews.order_id = order_items.order_id
+# MAGIC       GROUP BY product_id
+# MAGIC
+# MAGIC )
+# MAGIC SELECT * FROM avg_scores WHERE avg_score >= 4.0
+# MAGIC ORDER BY avg_score DESC
 
 # COMMAND ----------
 
@@ -280,4 +314,18 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC WITH CTE AS (
+# MAGIC     SELECT 
+# MAGIC     customer_unique_id,
+# MAGIC     customer_state,
+# MAGIC     COUNT(*) AS order_count,
+# MAGIC     RANK() OVER (PARTITION BY customer_state ORDER BY COUNT(*) DESC) AS rank
+# MAGIC     FROM orders
+# MAGIC     JOIN customers
+# MAGIC     ON orders.customer_id = customers.customer_id
+# MAGIC
+# MAGIC     GROUP BY customer_unique_id,customer_state
+# MAGIC )
+# MAGIC SELECT * FROM CTE WHERE rank = 1
+# MAGIC
+# MAGIC

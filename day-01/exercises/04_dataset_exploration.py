@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,11 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Count orders per status and display the results
+# MAGIC -- your code here
+# MAGIC SELECT order_status, COUNT(*) as order_status_count FROM training_marlene_mezzi.bronze.orders
+# MAGIC GROUP BY order_status
 
 # COMMAND ----------
 
@@ -59,8 +61,14 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Calculate the average delivery time in days across all delivered orders
+# MAGIC -- your code here
+# MAGIC
+# MAGIC SELECT AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) as avg_delivery_time 
+# MAGIC FROM training_marlene_mezzi.bronze.orders 
+# MAGIC WHERE order_delivered_customer_date is not null 
+# MAGIC
 
 # COMMAND ----------
 
@@ -78,8 +86,16 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Top 10 product categories by total revenue
+# MAGIC -- your code here
+# MAGIC SELECT product_category_name, SUM(price) as total_revenue 
+# MAGIC FROM training_marlene_mezzi.bronze.order_items 
+# MAGIC INNER JOIN training_marlene_mezzi.bronze.products 
+# MAGIC ON order_items.product_id = products.product_id
+# MAGIC GROUP BY product_category_name 
+# MAGIC ORDER BY total_revenue DESC 
+# MAGIC LIMIT 10
 
 # COMMAND ----------
 
@@ -95,8 +111,13 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Distribution of review scores — count per score value
+# MAGIC -- your code here
+# MAGIC select review_score, count(*) as review_score_count
+# MAGIC from training_marlene_mezzi.bronze.order_reviews
+# MAGIC group by review_score
+# MAGIC order by review_score
 
 # COMMAND ----------
 
@@ -119,8 +140,37 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Late delivery rate per customer state, sorted by highest rate first
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Late delivery rate per customer state, sorted by highest rate first
+# MAGIC -- your code here
+# MAGIC with cte as (
+# MAGIC     SELECT customer_state, CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END as is_late
+# MAGIC FROM training_marlene_mezzi.bronze.orders
+# MAGIC INNER JOIN training_marlene_mezzi.bronze.customers
+# MAGIC ON orders.customer_id = customers.customer_id
+# MAGIC WHERE order_status ='delivered' AND order_estimated_delivery_date is not null
+# MAGIC )
+# MAGIC select customer_state, round(sum(is_late)/count(*),2) *100 as late_rate
+# MAGIC from cte
+# MAGIC group by customer_state
+# MAGIC order by late_rate desc
+# MAGIC
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   c.customer_state,
+# MAGIC    ROUND(
+# MAGIC     SUM(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END)
+# MAGIC     * 100.0 / COUNT(*),
+# MAGIC     1
+# MAGIC   ) AS late_rate
+# MAGIC FROM training_marlene_mezzi.bronze.orders o
+# MAGIC JOIN training_marlene_mezzi.bronze.customers c ON o.customer_id = c.customer_id
+# MAGIC WHERE o.order_delivered_customer_date IS NOT NULL
+# MAGIC GROUP BY c.customer_state
+# MAGIC ORDER BY late_rate DESC;
 
 # COMMAND ----------
 

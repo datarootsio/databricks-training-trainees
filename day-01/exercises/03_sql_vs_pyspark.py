@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 03: SQL vs PySpark — Side by Side
 # MAGIC
@@ -14,11 +13,11 @@
 from pyspark.sql import functions as F
 
 # Read tables into DataFrames
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
-order_payments = spark.table("training_<name>.landing.order_payments")
+orders = spark.table("training_marlene_mezzi.bronze.orders")
+order_items = spark.table("training_marlene_mezzi.bronze.order_items")
+customers = spark.table("training_marlene_mezzi.bronze.customers")
+products = spark.table("training_marlene_mezzi.bronze.products")
+order_payments = spark.table("training_marlene_mezzi.bronze.order_payments")
 
 # COMMAND ----------
 
@@ -34,7 +33,7 @@ order_payments = spark.table("training_<name>.landing.order_payments")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_status, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_marlene_mezzi.bronze.orders
 # MAGIC WHERE order_status = 'delivered'
 # MAGIC LIMIT 10
 
@@ -50,6 +49,9 @@ orders.filter(F.col("order_status") == "delivered") \
 
 # TODO: Using PySpark, filter orders to only 'shipped' status and show order_id and order_purchase_timestamp
 # your code here
+orders.filter(F.col("order_status") == "shipped") \
+      .select("order_id", "order_purchase_timestamp") \
+      .display()
 
 # COMMAND ----------
 
@@ -65,7 +67,7 @@ orders.filter(F.col("order_status") == "delivered") \
 
 # MAGIC %sql
 # MAGIC SELECT order_status, COUNT(*) AS order_count
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_marlene_mezzi.bronze.orders
 # MAGIC GROUP BY order_status
 # MAGIC ORDER BY order_count DESC
 
@@ -91,12 +93,30 @@ orders.groupBy("order_status") \
 # MAGIC %sql
 # MAGIC -- TODO: Count orders per customer_state (SQL version)
 # MAGIC -- Hint: join orders and customers on customer_id, then group by customer_state
+# MAGIC SELECT
+# MAGIC   c.customer_state,
+# MAGIC   COUNT(DISTINCT o.order_id) AS order_count
+# MAGIC FROM training_marlene_mezzi.bronze.orders o
+# MAGIC JOIN training_marlene_mezzi.bronze.customers c ON o.customer_id = c.customer_id
+# MAGIC GROUP BY c.customer_state
+# MAGIC ORDER BY order_count DESC;
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
 # TODO: Count orders per customer_state (PySpark version)
 # Hint: join orders and customers DataFrames, then groupBy customer_state
 # your code here
+# countDistinct because one customer_id can appear on multiple orders
+(
+    orders.join(customers, on="customer_id", how="inner")
+    .groupBy("customer_state")
+    .agg(F.countDistinct("order_id").alias("order_count"))
+    .orderBy(F.desc("order_count"))
+    .display()
+)
+
 
 # COMMAND ----------
 
@@ -112,8 +132,8 @@ orders.groupBy("order_status") \
 
 # MAGIC %sql
 # MAGIC SELECT o.order_id, o.order_status, c.customer_city, c.customer_state
-# MAGIC FROM training_<name>.landing.orders o
-# MAGIC JOIN training_<name>.landing.customers c
+# MAGIC FROM training_marlene_mezzi.bronze.orders o
+# MAGIC JOIN training_marlene_mezzi.bronze.customers c
 # MAGIC   ON o.customer_id = c.customer_id
 # MAGIC LIMIT 20
 
@@ -139,11 +159,19 @@ orders.join(customers, on="customer_id", how="inner") \
 # MAGIC %sql
 # MAGIC -- TODO: Join order_items with products (SQL version)
 # MAGIC -- Show: order_id, product_category_name, price
+# MAGIC select oi.order_id, p.product_category_name, oi.price
+# MAGIC from training_marlene_mezzi.bronze.order_items oi
+# MAGIC join training_marlene_mezzi.bronze.products p
+# MAGIC   on oi.product_id = p.product_id
 
 # COMMAND ----------
 
 # TODO: Join order_items with products (PySpark version)
 # your code here
+
+order_items.join(products, on="product_id", how="inner") \
+            .select("order_id", "product_id", "product_category_name", "price") \
+            .display()
 
 # COMMAND ----------
 
@@ -159,7 +187,7 @@ orders.join(customers, on="customer_id", how="inner") \
 
 # MAGIC %sql
 # MAGIC SELECT order_id, payment_value
-# MAGIC FROM training_<name>.landing.order_payments
+# MAGIC FROM training_marlene_mezzi.bronze.order_payments
 # MAGIC ORDER BY payment_value DESC
 # MAGIC LIMIT 10
 
@@ -184,11 +212,21 @@ order_payments.orderBy(F.desc("payment_value")) \
 
 # MAGIC %sql
 # MAGIC -- TODO: Top 5 products by total revenue (SQL version)
+# MAGIC select  p.product_id, sum(oi.price) as total_revenue
+# MAGIC from training_marlene_mezzi.bronze.order_items oi
+# MAGIC join training_marlene_mezzi.bronze.products p
+# MAGIC on oi.product_id = p.product_id
+# MAGIC group by p.product_id
+# MAGIC order by total_revenue desc
+# MAGIC limit 5
 
 # COMMAND ----------
 
 # TODO: Top 5 products by total revenue (PySpark version)
+
 # your code here
+
+order_items.join(products,on ="product_id",how ="inner").groupBy("product_id").agg(F.sum("price").alias("total_revenue")).orderBy(F.desc("total_revenue")).limit(5).display()
 
 # COMMAND ----------
 
@@ -204,15 +242,24 @@ order_payments.orderBy(F.desc("payment_value")) \
 # MAGIC **Revenue** = SUM(price)
 # MAGIC
 # MAGIC Write **both** a SQL version and a PySpark version.
+# MAGIC
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC -- TODO: Total revenue per seller state, top 10 (SQL version)
+# MAGIC SELECT s.seller_state, sum(oi.price) as total_revenue
+# MAGIC FROM training_marlene_mezzi.bronze.order_items oi
+# MAGIC JOIN training_marlene_mezzi.bronze.sellers s
+# MAGIC ON oi.seller_id = s.seller_id
+# MAGIC GROUP BY s.seller_state
+# MAGIC ORDER BY total_revenue DESC
+# MAGIC LIMIT 10
 
 # COMMAND ----------
 
-sellers = spark.table("training_<name>.landing.sellers")
+sellers = spark.table("training_marlene_mezzi.bronze.sellers")
 
 # TODO: Total revenue per seller state, top 10 (PySpark version)
 # your code here
+order_items.join(sellers,on="seller_id",how="inner").groupBy("seller_state").agg(F.sum("price").alias("total_revenue")).orderBy(F.desc("total_revenue")).limit(10).display()
