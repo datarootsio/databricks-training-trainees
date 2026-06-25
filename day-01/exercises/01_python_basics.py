@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -64,6 +63,17 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 #         2. Print the number of states using len().
 
 # YOUR CODE HERE
+orders_by_state = {
+    "SP": 45000,
+    "RJ": 13000,
+    "MG": 12000,
+    "RS": 6500,
+    "PR": 5800,
+    "SC": 3200}
+
+
+print("orders_by_state: ", orders_by_state)
+print("Number of states: ", len(orders_by_state))
 
 
 # COMMAND ----------
@@ -119,6 +129,20 @@ print(f"Delivery took {days} days")
 #           "Score 1 -> negative"
 
 # YOUR CODE HERE
+
+def categorize_review_score(score):
+    if score <1 or score > 5:
+        return "Score is invalid, score should be between 1 and 5"
+    elif score <= 2:
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    else:
+        return "positive"
+
+for s in [1, 3, 5]:
+    print("Score", s , "->", categorize_review_score(s))
+"""or print(f"Score {s} -> {categorize_review_score(s)}")"""
 
 
 # COMMAND ----------
@@ -186,6 +210,11 @@ state_order_counts = {
 }
 
 # YOUR CODE HERE
+print("States with MORE than 1000 orders:")
+for s, c in state_order_counts.items():
+    if c > 1000:
+        print(f"{s}: {c} orders")
+
 
 
 # COMMAND ----------
@@ -224,6 +253,15 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
 # YOUR CODE HERE
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+
+print(f"Average: {avg_score}")
+print(f"Max: {max_score}")
+print(f"Min: {min_score}")
+print(f"Sorted scores: {sorted_scores}")
 
 
 # COMMAND ----------
@@ -293,4 +331,9 @@ state_revenue = {
 }
 
 # YOUR CODE HERE
+def top_states_by_revenue(state_revenue_dict: dict, n=3):
+    return sorted(state_revenue_dict.items(),key=lambda x: x[1], reverse = True)[:n]
 
+
+for n, (s,r) in enumerate(top_states_by_revenue(state_revenue)):
+    print(f"Rank {n} state {s}: revenue: {r:.2f} ")

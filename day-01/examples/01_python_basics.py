@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -59,6 +58,7 @@ orders_by_state = {
 
 print(f"States tracked: {len(orders_by_state)}")
 print(f"Total orders across these states: {sum(orders_by_state.values()):,}")
+print(f"Total orders across these states: {sum(orders_by_state.values())}")
 
 # COMMAND ----------
 
@@ -204,6 +204,7 @@ avg_score = sum(review_scores) / len(review_scores)
 max_score = max(review_scores)
 min_score = min(review_scores)
 sorted_scores = sorted(review_scores, reverse=True)
+"""sorted_scores = sorted(review_scores)"""
 
 print(f"Average: {avg_score:.2f}")
 print(f"Max:     {max_score}")

@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,21 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+orders = spark.table("training_sonam_lhamu.bronze.orders")
+order_items = spark.table("training_sonam_lhamu.bronze.order_items")
+customers = spark.table("training_sonam_lhamu.bronze.customers")
+products = spark.table("training_sonam_lhamu.bronze.products")
+order_payments = spark.table("training_sonam_lhamu.bronze.order_payments")
+
+# COMMAND ----------
+
 # TODO: Count orders per status and display the results
 # your code here
+orders.groupby("order_status")\
+    .agg(F.count("order_id").alias("count"))\
+    .orderBy(F.desc("count"))\
+    .display()
+
 
 # COMMAND ----------
 
@@ -59,8 +71,13 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+orders.filter(F.col("order_delivered_customer_date").isNotNull())\
+    .withColumn(
+        "date_diff",
+        F.datediff(F.col("order_delivered_customer_date"), F.col("order_purchase_timestamp"))
+    )\
+    .agg(F.avg("date_diff").alias("avg_delivery_days"))\
+    .display()
 
 # COMMAND ----------
 
@@ -80,6 +97,12 @@ from pyspark.sql import functions as F
 
 # TODO: Top 10 product categories by total revenue
 # your code here
+order_items.join(products, on="product_id", how= "inner")\
+    .groupby("product_category_name")\
+    .agg(F.sum(F.col("price")).alias("total_revenue"))\
+    .orderBy(F.desc("total_revenue"))\
+    .limit(10)\
+    .display()
 
 # COMMAND ----------
 
@@ -95,8 +118,22 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+order_reviews = spark.table("training_sonam_lhamu.bronze.order_reviews")
+order_reviews.groupby("review_score")\
+    .agg(F.count("review_id").alias("count"))\
+    .orderBy("review_score")\
+    .display()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(*) FROM training_sonam_lhamu.bronze.order_reviews
+# MAGIC where review_score is null
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * FROM training_sonam_lhamu.bronze.order_reviews
 
 # COMMAND ----------
 
@@ -119,8 +156,38 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+orders.join(customers, on="customer_id", how = "inner")\
+    .filter((F.col("order_status")=="delivered") & (F.col("order_delivered_customer_date").isNotNull()) & (F.col("order_estimated_delivery_date").isNotNull()))\
+    .withColumn(
+        "is_late",
+        F.when(F.col("order_estimated_delivery_date") > F.col("order_delivered_customer_date"),1).otherwise(0)
+    ).groupby("customer_state")\
+    .agg(F.round(F.sum("is_late")/F.count("*")*100,1).alias("late_rate"))\
+    .orderBy(F.desc("late_rate"))\
+    .display()
+    
+
+# COMMAND ----------
+
+orders.join(customers, on="customer_id", how = "inner")\
+    .filter((F.col("order_status")=="delivered") & (F.col("order_delivered_customer_date").isNotNull()) & (F.col("order_estimated_delivery_date").isNotNull()))\
+    .withColumn(
+        "is_late",
+        F.when(F.col("order_estimated_delivery_date") > F.col("order_delivered_customer_date"),1).otherwise(0)
+    ).select(customers.customer_state,"is_late","order_estimated_delivery_date","order_delivered_customer_date")\
+    .display()
+
+# COMMAND ----------
+
 # TODO: Late delivery rate per customer state, sorted by highest rate first
 # your code here
+orders.join(customers, on="customer_id", how = "inner")\
+    .filter((F.col("order_status")=="delivered") & (F.col("order_delivered_customer_date").isNotNull()) & (F.col("order_estimated_delivery_date").isNotNull()))\
+    .withColumn(
+        "date_diff",
+        F.datediff(F.col("order_delivered_customer_date"),F.col("order_estimated_delivery_date"))
+    ).select(customers.customer_state,"date_diff","order_estimated_delivery_date","order_delivered_customer_date")\
+    .display()
 
 # COMMAND ----------
 

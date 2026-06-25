@@ -1,12 +1,11 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 04 — Dataset Exploration (Trainer "I do")
 # MAGIC
 # MAGIC We now answer real **business questions** about the Olist dataset, showing the PySpark
 # MAGIC solution and the equivalent SQL for each. Every cell is fully worked — no TODOs.
 # MAGIC
-# MAGIC **Catalog/schema:** tables live in `training_<name>.landing`.
+# MAGIC **Catalog/schema:** tables live in `training_sonam_lhamu.bronze`.
 
 # COMMAND ----------
 
@@ -30,7 +29,7 @@ from pyspark.sql.window import Window
 # COMMAND ----------
 
 # Q1 — PySpark
-orders = spark.table("training_<name>.landing.orders")
+
 (
     orders
     .groupBy("order_status")
@@ -44,7 +43,7 @@ orders = spark.table("training_<name>.landing.orders")
 # MAGIC %sql
 # MAGIC -- Q1 — SQL
 # MAGIC SELECT order_status, COUNT(*) AS order_count
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_sonam_lhamu.bronze.orders
 # MAGIC GROUP BY order_status
 # MAGIC ORDER BY order_count DESC;
 
@@ -59,7 +58,7 @@ orders = spark.table("training_<name>.landing.orders")
 # COMMAND ----------
 
 # Q2 — PySpark
-orders = spark.table("training_<name>.landing.orders")
+orders = spark.table("training_sonam_lhamu.bronze.orders")
 (
     orders
     .filter(F.col("order_delivered_customer_date").isNotNull())
@@ -83,7 +82,7 @@ orders = spark.table("training_<name>.landing.orders")
 # MAGIC   ROUND(AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)), 1) AS avg_delivery_days,
 # MAGIC   MIN(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS min_days,
 # MAGIC   MAX(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS max_days
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_sonam_lhamu.bronze.orders
 # MAGIC WHERE order_delivered_customer_date IS NOT NULL;
 
 # COMMAND ----------
@@ -97,8 +96,8 @@ orders = spark.table("training_<name>.landing.orders")
 # COMMAND ----------
 
 # Q3 — PySpark
-order_items = spark.table("training_<name>.landing.order_items")
-products = spark.table("training_<name>.landing.products")
+order_items = spark.table("training_sonam_lhamu.bronze.order_items")
+products = spark.table("training_sonam_lhamu.bronze.products")
 (
     order_items
     .join(products, on="product_id", how="left")
@@ -118,8 +117,8 @@ products = spark.table("training_<name>.landing.products")
 # MAGIC   COALESCE(p.product_category_name, 'unknown') AS product_category_name,
 # MAGIC   ROUND(SUM(oi.price), 2) AS total_revenue,
 # MAGIC   COUNT(DISTINCT oi.order_id) AS order_count
-# MAGIC FROM training_<name>.landing.order_items oi
-# MAGIC LEFT JOIN training_<name>.landing.products p ON oi.product_id = p.product_id
+# MAGIC FROM training_sonam_lhamu.bronze.order_items oi
+# MAGIC LEFT JOIN training_sonam_lhamu.bronze.products p ON oi.product_id = p.product_id
 # MAGIC GROUP BY COALESCE(p.product_category_name, 'unknown')
 # MAGIC ORDER BY total_revenue DESC
 # MAGIC LIMIT 10;
@@ -135,7 +134,7 @@ products = spark.table("training_<name>.landing.products")
 # COMMAND ----------
 
 # Q4 — PySpark
-order_reviews = spark.table("training_<name>.landing.order_reviews")
+order_reviews = spark.table("training_sonam_lhamu.bronze.order_reviews")
 total_reviews = order_reviews.count()
 (
     order_reviews
@@ -154,7 +153,7 @@ total_reviews = order_reviews.count()
 # MAGIC   review_score,
 # MAGIC   COUNT(*) AS review_count,
 # MAGIC   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pct
-# MAGIC FROM training_<name>.landing.order_reviews
+# MAGIC FROM training_sonam_lhamu.bronze.order_reviews
 # MAGIC GROUP BY review_score
 # MAGIC ORDER BY review_score;
 
@@ -169,8 +168,8 @@ total_reviews = order_reviews.count()
 # COMMAND ----------
 
 # Q5 — PySpark
-orders = spark.table("training_<name>.landing.orders")
-customers = spark.table("training_<name>.landing.customers")
+orders = spark.table("training_sonam_lhamu.bronze.orders")
+customers = spark.table("training_sonam_lhamu.bronze.customers")
 (
     orders
     .filter(F.col("order_delivered_customer_date").isNotNull())
@@ -202,8 +201,8 @@ customers = spark.table("training_<name>.landing.customers")
 # MAGIC     * 100.0 / COUNT(*),
 # MAGIC     1
 # MAGIC   ) AS late_rate_pct
-# MAGIC FROM training_<name>.landing.orders o
-# MAGIC JOIN training_<name>.landing.customers c ON o.customer_id = c.customer_id
+# MAGIC FROM training_sonam_lhamu.bronze.orders o
+# MAGIC JOIN training_sonam_lhamu.bronze.customers c ON o.customer_id = c.customer_id
 # MAGIC WHERE o.order_delivered_customer_date IS NOT NULL
 # MAGIC GROUP BY c.customer_state
 # MAGIC ORDER BY late_rate_pct DESC;

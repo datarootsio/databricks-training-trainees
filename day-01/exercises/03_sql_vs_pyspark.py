@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 03: SQL vs PySpark — Side by Side
 # MAGIC
@@ -14,11 +13,11 @@
 from pyspark.sql import functions as F
 
 # Read tables into DataFrames
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
-order_payments = spark.table("training_<name>.landing.order_payments")
+orders = spark.table("training_sonam_lhamu.bronze.orders")
+order_items = spark.table("training_sonam_lhamu.bronze.order_items")
+customers = spark.table("training_sonam_lhamu.bronze.customers")
+products = spark.table("training_sonam_lhamu.bronze.products")
+order_payments = spark.table("training_sonam_lhamu.bronze.order_payments")
 
 # COMMAND ----------
 
@@ -34,7 +33,7 @@ order_payments = spark.table("training_<name>.landing.order_payments")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_status, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_sonam_lhamu.bronze.orders
 # MAGIC WHERE order_status = 'delivered'
 # MAGIC LIMIT 10
 
@@ -50,6 +49,10 @@ orders.filter(F.col("order_status") == "delivered") \
 
 # TODO: Using PySpark, filter orders to only 'shipped' status and show order_id and order_purchase_timestamp
 # your code here
+orders.filter(F.col("order_status") == "shipped")\
+.select("order_id","order_purchase_timestamp")\
+    .limit(10)\
+.display()
 
 # COMMAND ----------
 
@@ -65,7 +68,7 @@ orders.filter(F.col("order_status") == "delivered") \
 
 # MAGIC %sql
 # MAGIC SELECT order_status, COUNT(*) AS order_count
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_sonam_lhamu.bronze.orders
 # MAGIC GROUP BY order_status
 # MAGIC ORDER BY order_count DESC
 
@@ -97,6 +100,11 @@ orders.groupBy("order_status") \
 # TODO: Count orders per customer_state (PySpark version)
 # Hint: join orders and customers DataFrames, then groupBy customer_state
 # your code here
+orders.join(customers, on="customer_id", how = "inner")\
+    .groupby("customer_state")\
+    .agg(F.count(F.col("order_id")).alias("order_count")) \
+    .display()
+    
 
 # COMMAND ----------
 
@@ -112,8 +120,8 @@ orders.groupBy("order_status") \
 
 # MAGIC %sql
 # MAGIC SELECT o.order_id, o.order_status, c.customer_city, c.customer_state
-# MAGIC FROM training_<name>.landing.orders o
-# MAGIC JOIN training_<name>.landing.customers c
+# MAGIC FROM training_sonam_lhamu.bronze.orders o
+# MAGIC JOIN training_sonam_lhamu.bronze.customers c
 # MAGIC   ON o.customer_id = c.customer_id
 # MAGIC LIMIT 20
 
@@ -144,6 +152,10 @@ orders.join(customers, on="customer_id", how="inner") \
 
 # TODO: Join order_items with products (PySpark version)
 # your code here
+order_items.join(products, on="product_id", how="inner")\
+    .select("order_id","product_category_name","price")\
+    .limit(5)\
+    .display()
 
 # COMMAND ----------
 
@@ -159,7 +171,7 @@ orders.join(customers, on="customer_id", how="inner") \
 
 # MAGIC %sql
 # MAGIC SELECT order_id, payment_value
-# MAGIC FROM training_<name>.landing.order_payments
+# MAGIC FROM training_sonam_lhamu.bronze.order_payments
 # MAGIC ORDER BY payment_value DESC
 # MAGIC LIMIT 10
 
@@ -212,7 +224,7 @@ order_payments.orderBy(F.desc("payment_value")) \
 
 # COMMAND ----------
 
-sellers = spark.table("training_<name>.landing.sellers")
+sellers = spark.table("training_sonam_lhamu.bronze.sellers")
 
 # TODO: Total revenue per seller state, top 10 (PySpark version)
 # your code here
