@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -57,6 +56,7 @@ orders_by_state = {
     "BA": 3380,
 }
 
+print(f"States tracked: {orders_by_state.keys()}")
 print(f"States tracked: {len(orders_by_state)}")
 print(f"Total orders across these states: {sum(orders_by_state.values()):,}")
 
