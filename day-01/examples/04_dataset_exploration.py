@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 04 — Dataset Exploration (Trainer "I do")
 # MAGIC
@@ -44,7 +43,7 @@ orders = spark.table("training_<name>.landing.orders")
 # MAGIC %sql
 # MAGIC -- Q1 — SQL
 # MAGIC SELECT order_status, COUNT(*) AS order_count
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_dyhia_dib.bronze.orders
 # MAGIC GROUP BY order_status
 # MAGIC ORDER BY order_count DESC;
 
@@ -83,7 +82,7 @@ orders = spark.table("training_<name>.landing.orders")
 # MAGIC   ROUND(AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)), 1) AS avg_delivery_days,
 # MAGIC   MIN(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS min_days,
 # MAGIC   MAX(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS max_days
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_dyhia_dib.bronze.orders
 # MAGIC WHERE order_delivered_customer_date IS NOT NULL;
 
 # COMMAND ----------
