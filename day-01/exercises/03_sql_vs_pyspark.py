@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 03: SQL vs PySpark — Side by Side
 # MAGIC
@@ -34,7 +33,7 @@ order_payments = spark.table("training_<name>.landing.order_payments")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_status, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_nandita_hadkar.bronze.orders
 # MAGIC WHERE order_status = 'delivered'
 # MAGIC LIMIT 10
 

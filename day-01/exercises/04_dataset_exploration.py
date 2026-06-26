@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,13 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# DBTITLE 1,Cell 4
+# MAGIC %sql
+# MAGIC -- TODO: Count orders per status and display the results
+# MAGIC -- your code here
+# MAGIC SELECT order_status, count(*) as count_orders 
+# MAGIC from training_nandita_hadkar.landing.orders 
+# MAGIC group by order_status order by count_orders desc
 
 # COMMAND ----------
 
@@ -59,8 +63,13 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# DBTITLE 1,Cell 6
+# MAGIC %sql
+# MAGIC -- TODO: Calculate the average delivery time in days across all delivered orders
+# MAGIC -- your code here
+# MAGIC SELECT avg(date_diff(order_delivered_customer_date, order_purchase_timestamp)) as avg_delivery_time
+# MAGIC FROM training_nandita_hadkar.landing.orders
+# MAGIC where order_delivered_customer_date IS NOT NULL
 
 # COMMAND ----------
 
@@ -78,8 +87,17 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# DBTITLE 1,Cell 8
+# MAGIC %sql
+# MAGIC -- TODO: Top 10 product categories by total revenue
+# MAGIC -- your code here
+# MAGIC SELECT product_category_name, sum(price) as Revenue 
+# MAGIC FROM training_nandita_hadkar.landing.order_items 
+# MAGIC join training_nandita_hadkar.landing.products on order_items.product_id = products.product_id
+# MAGIC GROUP BY product_category_name
+# MAGIC HAVING product_category_name IS NOT NULL
+# MAGIC ORDER BY revenue DESC
+# MAGIC LIMIT 10
 
 # COMMAND ----------
 
@@ -95,8 +113,15 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC --TODO: Distribution of review scores — count per score value
+# MAGIC -- your code here
+# MAGIC
+# MAGIC SELECT review_score, count(*) as count_reviews 
+# MAGIC FROM training_nandita_hadkar.landing.order_reviews 
+# MAGIC
+# MAGIC GROUP BY review_score
+# MAGIC ORDER BY count_reviews ASC
 
 # COMMAND ----------
 
