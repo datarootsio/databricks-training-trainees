@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 03 — SQL vs PySpark, Side by Side.
 # MAGIC
@@ -20,10 +19,11 @@
 
 from pyspark.sql import functions as F
 
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
+orders = spark.table("training_senthil_anandan.bronze.orders")
+order_items = spark.table("training_senthil_anandan.bronze.order_items")
+customers = spark.table("training_senthil_anandan.bronze.customers")
+products = spark.table("training_senthil_anandan.bronze.products")
+prod_category = spark.table("training_senthil_anandan.bronze.product_category_name_translation")
 
 # COMMAND ----------
 
@@ -36,7 +36,7 @@ products = spark.table("training_<name>.landing.products")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_senthil_anandan.bronze.orders
 # MAGIC WHERE order_status = 'shipped'
 # MAGIC LIMIT 10;
 
@@ -45,8 +45,9 @@ products = spark.table("training_<name>.landing.products")
 # Part A — PySpark equivalent
 # F.col() is preferred over plain strings: IDE autocomplete + typos caught early
 (
-    orders.filter(F.col("order_status") == "shipped")
-    .select("order_id", "order_purchase_timestamp")
+    orders.filter(F.col("order_status").isin("shipped", "Delivered"))
+    .select("order_id", "order_status","order_purchase_timestamp")
+    .orderBy("order_status")
     .limit(10)
     .display()
 )
@@ -74,7 +75,10 @@ products = spark.table("training_<name>.landing.products")
 # Part B — PySpark equivalent
 # countDistinct because one customer_id can appear on multiple orders
 (
-    orders.join(customers, on="customer_id", how="inner")
+    orders.join(customers, on="customer_id", how="inner"),
+    orders.join(prod_category, on="product_category_name", how="inner")
+    .select("order_id", "customer_state", "product_category_name_english")
+    .orderBy("product_category_name","c")
     .groupBy("customer_state")
     .agg(F.countDistinct("order_id").alias("order_count"))
     .orderBy(F.desc("order_count"))
@@ -132,11 +136,12 @@ products = spark.table("training_<name>.landing.products")
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 15
 # Part D — PySpark equivalent
 # The chain .join().groupBy().agg().orderBy().limit() mirrors the SQL clause order
 (
     order_items.join(products, on="product_id", how="left")
-    .groupBy("product_id", "product_category_name")
+    .groupBy("product_category_name")
     .agg(F.round(F.sum("price"), 2).alias("total_revenue"))
     .orderBy(F.desc("total_revenue"))
     .limit(5)

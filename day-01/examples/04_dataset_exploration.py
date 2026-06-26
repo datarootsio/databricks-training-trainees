@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 04 — Dataset Exploration (Trainer "I do")
 # MAGIC
@@ -83,7 +82,7 @@ orders = spark.table("training_<name>.landing.orders")
 # MAGIC   ROUND(AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)), 1) AS avg_delivery_days,
 # MAGIC   MIN(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS min_days,
 # MAGIC   MAX(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS max_days
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_senthil_anandan.bronze.orders
 # MAGIC WHERE order_delivered_customer_date IS NOT NULL;
 
 # COMMAND ----------
@@ -118,8 +117,8 @@ products = spark.table("training_<name>.landing.products")
 # MAGIC   COALESCE(p.product_category_name, 'unknown') AS product_category_name,
 # MAGIC   ROUND(SUM(oi.price), 2) AS total_revenue,
 # MAGIC   COUNT(DISTINCT oi.order_id) AS order_count
-# MAGIC FROM training_<name>.landing.order_items oi
-# MAGIC LEFT JOIN training_<name>.landing.products p ON oi.product_id = p.product_id
+# MAGIC FROM training_senthil_anandan.bronze.order_items oi
+# MAGIC LEFT JOIN training_senthil_anandan.bronze.products p ON oi.product_id = p.product_id
 # MAGIC GROUP BY COALESCE(p.product_category_name, 'unknown')
 # MAGIC ORDER BY total_revenue DESC
 # MAGIC LIMIT 10;
@@ -154,7 +153,7 @@ total_reviews = order_reviews.count()
 # MAGIC   review_score,
 # MAGIC   COUNT(*) AS review_count,
 # MAGIC   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pct
-# MAGIC FROM training_<name>.landing.order_reviews
+# MAGIC FROM training_senthil_anandan.bronze.order_reviews
 # MAGIC GROUP BY review_score
 # MAGIC ORDER BY review_score;
 
