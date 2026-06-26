@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -28,6 +27,11 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+# alternative
+import pyspark.sql.functions as F
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Question 1: Order Status Distribution
 # MAGIC
@@ -40,8 +44,22 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# DBTITLE 1,Cell 5
+# MAGIC %sql
+# MAGIC -- TODO: Count orders per status and display the results
+# MAGIC SELECT order_status,
+# MAGIC COUNT(*) AS order_count
+# MAGIC FROM swatch_training.landing.orders
+# MAGIC GROUP BY order_status
+
+# COMMAND ----------
+
+# MAGIC
+# MAGIC %sql
+# MAGIC SELECT order_status, COUNT(*) AS order_count
+# MAGIC FROM swatch_training.landing.orders
+# MAGIC GROUP BY order_status
+# MAGIC ORDER BY order_count DESC;
 
 # COMMAND ----------
 
@@ -62,6 +80,22 @@ from pyspark.sql import functions as F
 # TODO: Calculate the average delivery time in days across all delivered orders
 # your code here
 
+orders = spark.table("swatch_training.landing.orders")
+(
+    orders
+    .filter(F.col("order_delivered_customer_date").isNotNull())
+    .withColumn(
+        "delivery_days",
+        F.datediff(F.col("order_delivered_customer_date"), F.col("order_purchase_timestamp"))
+    )
+    .agg(
+        F.round(F.avg("delivery_days"), 1).alias("avg_delivery_days"),
+        F.min("delivery_days").alias("min_delivery_days"),
+        F.max("delivery_days").alias("max_delivery_days"),
+    )
+    .display()
+)
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -78,8 +112,11 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 10
 # TODO: Top 10 product categories by total revenue
 # your code here
+
+
 
 # COMMAND ----------
 
@@ -95,8 +132,8 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC
 
 # COMMAND ----------
 
@@ -121,6 +158,8 @@ from pyspark.sql import functions as F
 
 # TODO: Late delivery rate per customer state, sorted by highest rate first
 # your code here
+
+
 
 # COMMAND ----------
 

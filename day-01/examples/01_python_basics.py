@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -108,7 +107,6 @@ def categorize_review_score(score: int) -> str:
         return "neutral"
     else:  # 4 or 5
         return "positive"
-
 
 for s in [1, 3, 5]:
     print(f"Score {s} -> {categorize_review_score(s)}")

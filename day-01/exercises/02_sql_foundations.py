@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,7 +22,7 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
+# MAGIC USE CATALOG `swatch_training`;
 # MAGIC USE SCHEMA landing;
 
 # COMMAND ----------
@@ -59,6 +58,15 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   order_id,
+# MAGIC   customer_id,
+# MAGIC   order_status,
+# MAGIC   order_purchase_timestamp
+# MAGIC FROM orders
+# MAGIC WHERE order_status = 'canceled'
+# MAGIC ORDER BY order_purchase_timestamp ASC
+# MAGIC LIMIT 10;
 
 # COMMAND ----------
 
@@ -92,6 +100,12 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   payment_type,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment_value
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type
+# MAGIC ORDER BY avg_payment_value DESC;
 
 # COMMAND ----------
 
@@ -127,6 +141,14 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING COUNT(*) > 100
+# MAGIC ORDER BY item_count DESC
+# MAGIC LIMIT 20;
 
 # COMMAND ----------
 
@@ -169,6 +191,17 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   o.order_id,
+# MAGIC   c.order_item_id,
+# MAGIC   p.product_category_name
+# MAGIC FROM orders o
+# MAGIC JOIN order_items c
+# MAGIC   ON o.order_id = c.order_id
+# MAGIC   JOIN products p ON
+# MAGIC c.product_id = p.product_id
+# MAGIC LIMIT 20;
+# MAGIC
 
 # COMMAND ----------
 
@@ -215,9 +248,11 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,INCT
 # MAGIC %sql
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
 
 # COMMAND ----------
 
@@ -280,4 +315,6 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC
+# MAGIC
+# MAGIC

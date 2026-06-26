@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -65,6 +64,21 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 
 # YOUR CODE HERE
 
+orders_number = [20,30,40,50,60]
+print(orders_number)
+orders_by_state = {
+    "SP": 30,
+    "RJ": 15,
+    "MG": 20,
+    "BA": 10,
+    "RS": 99
+    }
+    
+print(orders_by_state)
+print(f"States tracked: {len(orders_by_state)}")
+print("Orders for Spain':", orders_by_state["SP"])
+print(f"order_by_state ->{ {k: v for k, v in orders_by_state.items() if v > 30} }")
+
 
 # COMMAND ----------
 
@@ -119,7 +133,35 @@ print(f"Delivery took {days} days")
 #           "Score 1 -> negative"
 
 # YOUR CODE HERE
+#Bucket a review score (1-5) into 'negative', 'neutral', or 'positive'."""
 
+def categorize_review_score(score: int) -> str:
+   
+    if score == 1 or score == 2:
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    elif score == 4 or score == 5:
+        return "positive"
+    
+        return "positive"
+
+def categorize_review_score(score_2: int) -> str:
+   
+    if score_2 <= 2:
+        return "negative"
+    elif score_2 > 4:
+        return "neutral"
+    elif score_2 > 10:
+        return "positive"
+    
+        return "positive"
+
+for s in [1, 3, 5]:
+    print(f"score {s} -> {categorize_review_score(s)}")
+
+for s in [1, 3, 5]:
+    print(f"score_2 {s} -> {categorize_review_score(s)}")
 
 # COMMAND ----------
 
@@ -186,6 +228,19 @@ state_order_counts = {
 }
 
 # YOUR CODE HERE
+# 1 
+
+for state in state_order_counts:
+    if state == "SP":    print(state, 'IS SP')
+    elif state == "RJ": print(state, 'IS RJ')
+    elif state == "CE": print(state, 'IS CE')
+
+
+# 2 / # 3
+for state, count in state_order_counts.items():
+    if count > 1000:
+        print(f'{state}: {count} orders')
+
 
 
 # COMMAND ----------
@@ -213,6 +268,7 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 14
 # TODO: Given the list of review scores below:
 #   1. Compute the average score using sum() and len() — store it in `avg_score`
 #   2. Find the maximum score — store it in `max_score`
@@ -223,7 +279,22 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
-# YOUR CODE HERE
+for score in review_scores:
+ if score % 2 == 0:    
+     print(f"{score} is odd")
+ elif score % 2 != 0:
+     print(f"{score} is even")  
+
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+print(f"Average: {avg_score:.2f}")
+print(f"Max: {max_score}")
+print(f"Min: {min_score}")
+print(f"Sorted: {sorted_scores}")
+
+
 
 
 # COMMAND ----------
@@ -281,16 +352,23 @@ print("\nTop 3 categories:", top3)
 #       After defining the function, call it with the `state_revenue` dict
 #       below (using the default n=3) and print the returned list.
 
-state_revenue = {
-    "SP": 5_432_100.50,
-    "RJ": 1_987_430.20,
-    "MG": 1_654_320.75,
-    "RS": 892_100.00,
-    "PR": 834_560.30,
-    "SC": 567_890.10,
-    "BA": 498_320.00,
-    "GO": 345_670.80,
-}
-
 # YOUR CODE HERE
 
+def top_states_by_revenue(list_of_states, n=2):
+
+    sorted_states = sorted(list_of_states.items(), key=lambda item: item[1], reverse=True)
+    
+    return sorted_states[:n]
+
+state_revenue = {
+    "SP": 1250.50,
+    "RJ": 850.25,
+    "MG": 920.10,
+    "BA": 430.15,
+    "RS": 610.80,
+    "PR": 590.40
+}
+
+top_2_states = top_states_by_revenue(state_revenue)
+
+print(top_2_states)
