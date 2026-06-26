@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 02 — SQL Foundations
 # MAGIC
@@ -19,7 +18,7 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
+# MAGIC USE CATALOG `training_moussa_kouyate`;
 # MAGIC USE SCHEMA landing;
 # MAGIC -- Replace <name> with your own name (e.g., training_jan).
 

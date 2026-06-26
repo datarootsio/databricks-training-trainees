@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,8 +22,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG training_moussa_kouyate;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -59,6 +58,8 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC select * from orders where order_status = 'canceled'
+# MAGIC order by order_purchase_timestamp desc
 
 # COMMAND ----------
 
@@ -73,11 +74,12 @@
 # MAGIC %sql
 # MAGIC -- Example: count orders per status
 # MAGIC SELECT
-# MAGIC   order_status,
-# MAGIC   COUNT(*) AS order_count
-# MAGIC FROM orders
-# MAGIC GROUP BY order_status
-# MAGIC ORDER BY order_count DESC;
+# MAGIC   payment_type,
+# MAGIC   COUNT(*) AS payment_count,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment_value
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type
+# MAGIC ORDER BY avg_payment_value DESC;
 
 # COMMAND ----------
 
@@ -92,6 +94,13 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   payment_type,
+# MAGIC   COUNT(*) AS payment_count,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment_value
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type
+# MAGIC ORDER BY avg_payment_value DESC;
 
 # COMMAND ----------
 
@@ -127,6 +136,14 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING COUNT(*) > 100
+# MAGIC ORDER BY item_count DESC
+# MAGIC
 
 # COMMAND ----------
 
@@ -169,6 +186,14 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING COUNT(*) > 100
+# MAGIC ORDER BY item_count DESC
+# MAGIC LIMIT 20;
 
 # COMMAND ----------
 
@@ -218,6 +243,23 @@
 # MAGIC %sql
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
+# MAGIC WITH product_avg_reviews AS (
+# MAGIC   SELECT
+# MAGIC     oi.product_id,
+# MAGIC     ROUND(AVG(r.review_score), 2) AS avg_score,
+# MAGIC     COUNT(r.review_id) AS review_count
+# MAGIC   FROM order_items oi
+# MAGIC   JOIN order_reviews r ON oi.order_id = r.order_id
+# MAGIC   GROUP BY oi.product_id
+# MAGIC )
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   avg_score,
+# MAGIC   review_count
+# MAGIC FROM product_avg_reviews
+# MAGIC WHERE avg_score >= 4.0
+# MAGIC ORDER BY avg_score DESC, review_count DESC
+# MAGIC LIMIT 20;
 
 # COMMAND ----------
 
@@ -280,4 +322,25 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC WITH customer_order_counts AS (
+# MAGIC   SELECT
+# MAGIC     c.customer_id,
+# MAGIC     c.customer_state,
+# MAGIC     COUNT(*) AS order_count
+# MAGIC   FROM orders o
+# MAGIC   JOIN customers c ON o.customer_id = c.customer_id
+# MAGIC   GROUP BY c.customer_id, c.customer_state
+# MAGIC ),
+# MAGIC ranked AS (
+# MAGIC   SELECT
+# MAGIC     customer_id,
+# MAGIC     customer_state,
+# MAGIC     order_count,
+# MAGIC     RANK() OVER (PARTITION BY customer_state ORDER BY order_count DESC) AS state_rank
+# MAGIC   FROM customer_order_counts
+# MAGIC )
+# MAGIC SELECT customer_state, customer_id, order_count, state_rank
+# MAGIC FROM ranked
+# MAGIC WHERE state_rank = 1
+# MAGIC ORDER BY customer_state;
+# MAGIC

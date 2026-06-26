@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 04 — Dataset Exploration (Trainer "I do")
 # MAGIC
@@ -29,15 +28,16 @@ from pyspark.sql.window import Window
 
 # COMMAND ----------
 
-# Q1 — PySpark
-orders = spark.table("training_<name>.landing.orders")
-(
-    orders
-    .groupBy("order_status")
-    .agg(F.count("*").alias("order_count"))
-    .orderBy(F.desc("order_count"))
-    .display()
-)
+# MAGIC %sql
+# MAGIC # Q1 — PySpark
+# MAGIC orders = spark.table("training_<name>.landing.orders")
+# MAGIC (
+# MAGIC     orders
+# MAGIC     .groupBy("order_status")
+# MAGIC     .agg(F.count("*").alias("order_count"))
+# MAGIC     .orderBy(F.desc("order_count"))
+# MAGIC     .display()
+# MAGIC )
 
 # COMMAND ----------
 
@@ -58,22 +58,23 @@ orders = spark.table("training_<name>.landing.orders")
 
 # COMMAND ----------
 
-# Q2 — PySpark
-orders = spark.table("training_<name>.landing.orders")
-(
-    orders
-    .filter(F.col("order_delivered_customer_date").isNotNull())
-    .withColumn(
-        "delivery_days",
-        F.datediff(F.col("order_delivered_customer_date"), F.col("order_purchase_timestamp"))
-    )
-    .agg(
-        F.round(F.avg("delivery_days"), 1).alias("avg_delivery_days"),
-        F.min("delivery_days").alias("min_delivery_days"),
-        F.max("delivery_days").alias("max_delivery_days"),
-    )
-    .display()
-)
+# MAGIC %sql
+# MAGIC # Q2 — PySpark
+# MAGIC orders = spark.table("training_<name>.landing.orders")
+# MAGIC (
+# MAGIC     orders
+# MAGIC     .filter(F.col("order_delivered_customer_date").isNotNull())
+# MAGIC     .withColumn(
+# MAGIC         "delivery_days",
+# MAGIC         F.datediff(F.col("order_delivered_customer_date"), F.col("order_purchase_timestamp"))
+# MAGIC     )
+# MAGIC     .agg(
+# MAGIC         F.round(F.avg("delivery_days"), 1).alias("avg_delivery_days"),
+# MAGIC         F.min("delivery_days").alias("min_delivery_days"),
+# MAGIC         F.max("delivery_days").alias("max_delivery_days"),
+# MAGIC     )
+# MAGIC     .display()
+# MAGIC )
 
 # COMMAND ----------
 

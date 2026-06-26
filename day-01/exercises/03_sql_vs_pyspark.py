@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 03: SQL vs PySpark — Side by Side
 # MAGIC
@@ -14,11 +13,11 @@
 from pyspark.sql import functions as F
 
 # Read tables into DataFrames
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
-order_payments = spark.table("training_<name>.landing.order_payments")
+orders = spark.table("training_moussa_kouyate_bronze.orders")
+order_items = spark.table("training_moussa_kouyate_bronze.order_items")
+customers = spark.table("training_moussa_kouyate_bronze.customers")
+products = spark.table("training_moussa_kouyate_bronze.products")
+order_payments = spark.table("training_moussa_kouyate_bronze.order_payments")
 
 # COMMAND ----------
 
@@ -34,17 +33,19 @@ order_payments = spark.table("training_<name>.landing.order_payments")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_status, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_moussa_kouyate.bronze.orders
 # MAGIC WHERE order_status = 'delivered'
 # MAGIC LIMIT 10
 
 # COMMAND ----------
 
 # PySpark equivalent of the SQL cell above
-orders.filter(F.col("order_status") == "delivered") \
-      .select("order_id", "order_status", "order_purchase_timestamp") \
-      .limit(10) \
-      .display()
+(
+    orders.filter(F.col("order_status") == "shipped")
+    .select("order_id", "order_purchase_timestamp")
+    .limit(10)
+    .display()
+)
 
 # COMMAND ----------
 
@@ -65,7 +66,7 @@ orders.filter(F.col("order_status") == "delivered") \
 
 # MAGIC %sql
 # MAGIC SELECT order_status, COUNT(*) AS order_count
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_moussa_kouyate_bronze.orders
 # MAGIC GROUP BY order_status
 # MAGIC ORDER BY order_count DESC
 
@@ -112,8 +113,8 @@ orders.groupBy("order_status") \
 
 # MAGIC %sql
 # MAGIC SELECT o.order_id, o.order_status, c.customer_city, c.customer_state
-# MAGIC FROM training_<name>.landing.orders o
-# MAGIC JOIN training_<name>.landing.customers c
+# MAGIC FROM training_moussa_kouyate_bronze.orders o
+# MAGIC JOIN training_moussa_kouyate_bronze.customers c
 # MAGIC   ON o.customer_id = c.customer_id
 # MAGIC LIMIT 20
 
@@ -137,13 +138,24 @@ orders.join(customers, on="customer_id", how="inner") \
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC -- TODO: Join order_items with products (SQL version)
-# MAGIC -- Show: order_id, product_category_name, price
+# MAGIC SELECT
+# MAGIC   oi.order_id,
+# MAGIC   p.product_category_name,
+# MAGIC   oi.price
+# MAGIC FROM training_moussa_kouyate.bronze.order_items oi
+# MAGIC LEFT JOIN training_moussa_kouyate.bronze.products p ON oi.product_id = p.product_id
+# MAGIC LIMIT 20;
 
 # COMMAND ----------
 
 # TODO: Join order_items with products (PySpark version)
 # your code here
+(
+    order_items.join(products, on="product_id", how="left")
+    .select("order_id", "product_category_name", "price")
+    .limit(20)
+    .display()
+)
 
 # COMMAND ----------
 
@@ -159,7 +171,7 @@ orders.join(customers, on="customer_id", how="inner") \
 
 # MAGIC %sql
 # MAGIC SELECT order_id, payment_value
-# MAGIC FROM training_<name>.landing.order_payments
+# MAGIC FROM training_moussa_kouyate_bronze.order_payments
 # MAGIC ORDER BY payment_value DESC
 # MAGIC LIMIT 10
 
@@ -184,6 +196,15 @@ order_payments.orderBy(F.desc("payment_value")) \
 
 # MAGIC %sql
 # MAGIC -- TODO: Top 5 products by total revenue (SQL version)
+# MAGIC SELECT
+# MAGIC   oi.product_id,
+# MAGIC   p.product_category_name,
+# MAGIC   ROUND(SUM(oi.price), 2) AS total_revenue
+# MAGIC FROM training_<name>.landing.order_items oi
+# MAGIC LEFT JOIN training_<name>.landing.products p ON oi.product_id = p.product_id
+# MAGIC GROUP BY oi.product_id, p.product_category_name
+# MAGIC ORDER BY total_revenue DESC
+# MAGIC LIMIT 5;
 
 # COMMAND ----------
 
@@ -212,7 +233,7 @@ order_payments.orderBy(F.desc("payment_value")) \
 
 # COMMAND ----------
 
-sellers = spark.table("training_<name>.landing.sellers")
+sellers = spark.table("training_moussa_kouyate_bronze.sellers")
 
 # TODO: Total revenue per seller state, top 10 (PySpark version)
 # your code here

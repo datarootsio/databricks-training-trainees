@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,12 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC
+# MAGIC SELECT order_status, COUNT(*) AS order_count
+# MAGIC FROM training_moussa_kouyate.bronze.orders
+# MAGIC GROUP BY order_status
+# MAGIC ORDER BY order_count DESC;
 
 # COMMAND ----------
 
@@ -59,8 +62,14 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC
+# MAGIC SELECT
+# MAGIC   ROUND(AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)), 3) AS avg_delivery_days,
+# MAGIC   MIN(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS min_days,
+# MAGIC   MAX(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) AS max_days
+# MAGIC FROM training_moussa_kouyate.bronze.orders
+# MAGIC WHERE order_delivered_customer_date IS NOT NULL;
 
 # COMMAND ----------
 
@@ -78,8 +87,17 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC --# TODO: Top 10 product categories by total revenue
+# MAGIC SELECT
+# MAGIC   COALESCE(p.product_category_name, 'unknown') AS product_category_name,
+# MAGIC   ROUND(SUM(oi.price), 2) AS total_revenue,
+# MAGIC   COUNT(DISTINCT oi.order_id) AS order_count
+# MAGIC FROM training_moussa_kouyate.bronze.order_items oi
+# MAGIC LEFT JOIN training_moussa_kouyate.bronze.products p ON oi.product_id = p.product_id
+# MAGIC GROUP BY COALESCE(p.product_category_name, 'unknown')
+# MAGIC ORDER BY total_revenue DESC
+# MAGIC LIMIT 10;
 
 # COMMAND ----------
 
@@ -95,8 +113,16 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC --# TODO: Distribution of review scores — count per score value
+# MAGIC
+# MAGIC SELECT
+# MAGIC   review_score,
+# MAGIC   COUNT(*) AS review_count,
+# MAGIC   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pct
+# MAGIC FROM training_moussa_kouyate.bronze.order_reviews
+# MAGIC GROUP BY review_score
+# MAGIC ORDER BY review_score;
 
 # COMMAND ----------
 
@@ -119,8 +145,21 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Late delivery rate per customer state, sorted by highest rate first
-# your code here
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   c.customer_state,
+# MAGIC   COUNT(*) AS delivered_orders,
+# MAGIC   SUM(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END) AS late_orders,
+# MAGIC   ROUND(
+# MAGIC     SUM(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END)
+# MAGIC     * 100.0 / COUNT(*),
+# MAGIC     1
+# MAGIC   ) AS late_rate_pct
+# MAGIC FROM training_moussa_kouyate.bronze.orders o
+# MAGIC JOIN training_moussa_kouyate.bronze.customers c ON o.customer_id = c.customer_id
+# MAGIC WHERE o.order_delivered_customer_date IS NOT NULL
+# MAGIC GROUP BY c.customer_state
+# MAGIC ORDER BY late_rate_pct DESC;
 
 # COMMAND ----------
 

@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -64,6 +63,17 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 #         2. Print the number of states using len().
 
 # YOUR CODE HERE
+orders_by_state = {
+    "SP": 41746,
+    "RJ": 12852,
+    "MG": 11635,
+    "RS": 5466,
+    "BA": 3380,
+}
+
+print(f"States tracked: {len(orders_by_state)}")
+print(f"Total orders across these states: {sum(orders_by_state.values()):,}")
+
 
 
 # COMMAND ----------
@@ -119,6 +129,19 @@ print(f"Delivery took {days} days")
 #           "Score 1 -> negative"
 
 # YOUR CODE HERE
+def categorize_review_score(score: int) -> str:
+    """Bucket a review score (1-5) into 'negative', 'neutral', or 'positive'."""
+    if score <= 2  :
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    else:  # 4 or 5
+        return "positive"
+
+print(f"Score 1 -> {categorize_review_score(        1)}")
+print(f"Score 3 -> {categorize_review_score(         3)}")
+print(f"Score 5 -> {categorize_review_score(         5)}")  
+
 
 
 # COMMAND ----------
@@ -184,8 +207,11 @@ state_order_counts = {
     "MS": 600,
     "AM": 350,
 }
+print ("States with more than 1000 orders:")
+for state, count in state_order_counts.items():
+    if count > 1000:
+         print(f"  {state}: {count:,} orders")
 
-# YOUR CODE HERE
 
 
 # COMMAND ----------
@@ -224,6 +250,17 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
 # YOUR CODE HERE
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+
+print(f"Average: {avg_score}")
+print("average", avg_score)
+print(f"Max: {max_score}")
+print(f"Min: {min_score}")
+print(f"Sorted: {sorted_scores}")
+
 
 
 # COMMAND ----------
@@ -293,4 +330,12 @@ state_revenue = {
 }
 
 # YOUR CODE HERE
+
+def top_states_by_revenue(state_revenue_dict, n=3):
+    return sorted(state_revenue_dict.items(), key=lambda x: x[1], reverse=True)[:n]
+
+top_states = top_states_by_revenue(state_revenue)
+print(top_states)
+
+
 
