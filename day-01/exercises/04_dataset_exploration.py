@@ -25,6 +25,13 @@
 
 from pyspark.sql import functions as F
 
+# Read tables into DataFrames
+orders = spark.table("training_julien_schneider.bronze.orders")
+order_items = spark.table("training_julien_schneider.bronze.order_items")
+customers = spark.table("training_julien_schneider.bronze.customers")
+products = spark.table("training_julien_schneider.bronze.products")
+order_payments = spark.table("training_julien_schneider.bronze.order_payments")
+
 # COMMAND ----------
 
 # MAGIC %md
