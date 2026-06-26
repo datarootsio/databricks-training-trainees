@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,8 +22,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_nacer_bellil`;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -59,6 +58,8 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC select * from orders where order_status = "canceled" order by order_purchase_timestamp
 
 # COMMAND ----------
 
@@ -92,6 +93,12 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC SELECT
+# MAGIC   payment_type,
+# MAGIC   ROUND(AVG(payment_value), 2) AS avg_payment
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type;
 
 # COMMAND ----------
 
@@ -127,6 +134,13 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS product_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING product_count > 100
+# MAGIC ORDER BY product_count DESC;
 
 # COMMAND ----------
 
@@ -169,6 +183,15 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC SELECT
+# MAGIC   o.order_id,
+# MAGIC   p.product_category_name,
+# MAGIC   oi.price
+# MAGIC FROM orders o
+# MAGIC JOIN order_items oi ON o.order_id = oi.order_id
+# MAGIC JOIN products p ON p.product_id = oi.product_id
+# MAGIC LIMIT 20;
 
 # COMMAND ----------
 
@@ -280,4 +303,4 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC

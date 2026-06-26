@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -24,7 +23,7 @@
 
 # COMMAND ----------
 
-from pyspark.sql import functions as F
+import pyspark.sql.functions as F
 
 # COMMAND ----------
 
@@ -40,8 +39,8 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC SELECT order_status, count(*) as nb_order_status from training_nacer_bellil.landing.orders GROUP BY order_status
 
 # COMMAND ----------
 
@@ -59,8 +58,8 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC SELECT AVG(DATEDIFF(order_delivered_customer_date, order_purchase_timestamp)) as avg_date_diff from training_nacer_bellil.landing.orders where order_delivered_customer_date IS NOT NULL 
 
 # COMMAND ----------
 
@@ -78,8 +77,10 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC -- TODO: Top 10 product categories by total revenue
+# MAGIC -- your code here
+# MAGIC select * from training_nacer_bellil.landing.order_items join training_nacer_bellil.landing.orders on training_nacer_bellil.landing.order_items.order_id = training_nacer_bellil.landing.orders.order_id where order_status = 'delivered' order by price desc limit 10
 
 # COMMAND ----------
 
@@ -95,8 +96,24 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 10
 # TODO: Distribution of review scores — count per score value
 # your code here
+
+
+
+spark.table("training_nacer_bellil.landing.order_reviews").groupBy('review_creation_date').agg(F.avg('review_answer_timestamp').alias('avg_date_diff')).orderBy(F.col('avg_date_diff').desc())
+# TODO: Top 10 most reviewed products
+# your code here
+
+display(
+    spark.table("training_nacer_bellil.landing.order_reviews")
+    .join(spark.table("training_nacer_bellil.landing.order_items"), "order_id")
+    .groupBy("product_id")
+    .count()
+    .orderBy(F.col("count").desc())
+    .limit(10)
+)
 
 # COMMAND ----------
 
@@ -119,8 +136,20 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 12
 # TODO: Late delivery rate per customer state, sorted by highest rate first
 # your code here
+
+display(
+    spark.table("training_nacer_bellil.landing.order_reviews")
+    .join(spark.table("training_nacer_bellil.landing.orders"), "order_id")
+    .join(spark.table("training_nacer_bellil.landing.order_items"), "order_id")
+    .join(spark.table("training_nacer_bellil.landing.customers"), "customer_id")
+    .withColumn("late_delivery", F.when(F.datediff(F.expr("try_to_timestamp(review_answer_timestamp)"), F.expr("try_to_timestamp(order_purchase_timestamp)")) > 3, 1).otherwise(0))
+    .groupBy("customer_state")
+    .agg(F.avg("late_delivery").alias("late_delivery_rate"))
+    .orderBy(F.col("late_delivery_rate").desc())
+)
 
 # COMMAND ----------
 
@@ -140,3 +169,18 @@ from pyspark.sql import functions as F
 
 # TODO: Most popular payment type per customer state
 # your code here
+
+
+display(
+    spark.table("training_nacer_bellil.landing.order_reviews")
+    .join(spark.table("training_nacer_bellil.landing.order_items"), "order_id")
+    .groupBy("product_id")
+    .count()
+    .orderBy(F.col("count").desc())
+    .limit(10)
+)
+# TODO: Top 10 most reviewed products
+
+# COMMAND ----------
+
+
