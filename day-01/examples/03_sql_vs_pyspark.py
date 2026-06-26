@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 03 — SQL vs PySpark, Side by Side.
 # MAGIC
@@ -20,10 +19,10 @@
 
 from pyspark.sql import functions as F
 
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
+orders = spark.table("training_julien_gafner.bronze.orders")
+order_items = spark.table("training_julien_gafner.bronze.order_items")
+customers = spark.table("training_julien_gafner.bronze.customers")
+products = spark.table("training_julien_gafner.bronze.products")
 
 # COMMAND ----------
 
@@ -36,7 +35,7 @@ products = spark.table("training_<name>.landing.products")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_julien_gafner.bronze.orders
 # MAGIC WHERE order_status = 'shipped'
 # MAGIC LIMIT 10;
 

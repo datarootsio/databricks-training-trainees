@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,8 +22,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_julien_gafner`;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -58,7 +57,14 @@
 
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
-# MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   order_id,
+# MAGIC   customer_id,
+# MAGIC   order_status,
+# MAGIC   order_purchase_timestamp
+# MAGIC FROM orders
+# MAGIC WHERE order_status = 'canceled'
+# MAGIC ORDER BY order_purchase_timestamp DESC
 
 # COMMAND ----------
 
@@ -91,7 +97,12 @@
 
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
-# MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC     payment_type,
+# MAGIC     ROUND(AVG(payment_value),2) AS avg_payment_value
+# MAGIC FROM order_payments
+# MAGIC GROUP BY payment_type
+# MAGIC ORDER BY avg_payment_value DESC;
 
 # COMMAND ----------
 
@@ -126,7 +137,13 @@
 
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
-# MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(*) AS item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING COUNT(*) > 100
+# MAGIC ORDER BY item_count DESC;
 
 # COMMAND ----------
 
@@ -280,4 +297,4 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC

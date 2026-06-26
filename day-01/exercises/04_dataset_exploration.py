@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,17 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC USE CATALOG `training_julien_gafner`;
+# MAGIC USE SCHEMA bronze;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT order_status,         
+# MAGIC         count(*) count_
+# MAGIC FROM orders GROUP BY order_status
+# MAGIC order by count_ DESC;
 
 # COMMAND ----------
 
@@ -59,8 +67,10 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC select
+# MAGIC from orders
+# MAGIC
 
 # COMMAND ----------
 
