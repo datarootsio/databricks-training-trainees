@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 01 — Python Basics
 # MAGIC
@@ -265,6 +264,26 @@ state_revenue = {
 print("Top 3 states by revenue:")
 for rank, (state, revenue) in enumerate(top_states_by_revenue(state_revenue), start=1):
     print(f"  #{rank} {state}: R$ {revenue:,.2f}")
+
+# COMMAND ----------
+
+# DBTITLE 1,Sorting without lambda — using operator.itemgetter
+from operator import itemgetter
+
+# itemgetter(1) does exactly the same as: lambda x: x[1]
+# It returns a callable that extracts the element at index 1
+get_revenue = itemgetter(1)
+
+print("Top 3 states by revenue (no lambda):")
+for rank, (state, revenue) in enumerate(
+    sorted(state_revenue.items(), key=get_revenue, reverse=True)[:3], start=1
+):
+    print(f"  #{rank} {state}: R$ {revenue:,.2f}")
+
+# You can also pass itemgetter inline, without naming it:
+print("\nAll states sorted:")
+for state, revenue in sorted(state_revenue.items(), key=itemgetter(1), reverse=True):
+    print(f"  {state}: R$ {revenue:,.2f}")
 
 # COMMAND ----------
 

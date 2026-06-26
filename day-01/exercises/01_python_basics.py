@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -64,6 +63,9 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 #         2. Print the number of states using len().
 
 # YOUR CODE HERE
+orders_by_state = {"SP" : 999, "RJ" : 1000, "MG" : 1200, "BA" : 1500, "RS" : 1800}
+print(orders_by_state)
+print(f'Number of states : {len(orders_by_state)}')
 
 
 # COMMAND ----------
@@ -108,6 +110,7 @@ print(f"Delivery took {days} days")
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 7
 # TODO: Write a function called `categorize_review_score(score)` that accepts
 #       an integer score (1–5) and returns a string category:
 #         - score 1 or 2  -> "negative"
@@ -119,6 +122,21 @@ print(f"Delivery took {days} days")
 #           "Score 1 -> negative"
 
 # YOUR CODE HERE
+def categorize_review_score(score) -> str:
+    if score in [1,2]:
+        return 'negative'
+    elif score == 3:
+        return 'neutral'
+    elif score in [4,5]:
+        return 'positive'
+    else:
+        Exception('Not handled')
+
+
+for i in [1,3,5]:
+    print(f'Score {i} -> {categorize_review_score(i)}')  
+
+
 
 
 # COMMAND ----------
@@ -159,6 +177,7 @@ print("Done.")
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 11
 # TODO: The dict `state_order_counts` below maps state abbreviations to
 #       order counts.
 #
@@ -187,6 +206,10 @@ state_order_counts = {
 
 # YOUR CODE HERE
 
+for k, v in state_order_counts.items():
+    if v > 1000:
+        print(f'{k}: {v} orders')
+
 
 # COMMAND ----------
 
@@ -213,6 +236,7 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 14
 # TODO: Given the list of review scores below:
 #   1. Compute the average score using sum() and len() — store it in `avg_score`
 #   2. Find the maximum score — store it in `max_score`
@@ -224,6 +248,10 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
 # YOUR CODE HERE
+print("Average : ", sum(review_scores)/len(review_scores))
+print("Max : ", max(review_scores))
+print("Min : ", min(review_scores))
+print("Sorted : ", sorted(review_scores, reverse=True))
 
 
 # COMMAND ----------
@@ -293,4 +321,10 @@ state_revenue = {
 }
 
 # YOUR CODE HERE
+def top_states_by_revenue(state_revenue_dict : dict, n : int =3) -> list:
+    return sorted(state_revenue_dict.items(), key= lambda x : x[1], reverse=True)[:n]
+
+top_states_by_revenue(state_revenue, 2)
+
+
 
