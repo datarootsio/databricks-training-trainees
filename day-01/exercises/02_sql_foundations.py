@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,7 +22,7 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
+# MAGIC USE CATALOG `training_guillaume_riondet`;
 # MAGIC USE SCHEMA landing;
 
 # COMMAND ----------
@@ -59,6 +58,15 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC     order_id,
+# MAGIC     order_purchase_timestamp
+# MAGIC FROM
+# MAGIC     orders
+# MAGIC WHERE
+# MAGIC     order_status = "canceled"
+# MAGIC ORDER BY
+# MAGIC     order_purchase_timestamp desc
 
 # COMMAND ----------
 
@@ -92,6 +100,15 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC     payment_type,
+# MAGIC     ROUND(SUM(payment_value)/COUNT(*),2) AS avg_payment_value
+# MAGIC FROM
+# MAGIC     order_payments
+# MAGIC GROUP BY
+# MAGIC     payment_type
+# MAGIC ORDER BY
+# MAGIC     avg_payment_value desc
 
 # COMMAND ----------
 
@@ -127,6 +144,17 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC     product_id,
+# MAGIC     COUNT(*) as item_count
+# MAGIC FROM
+# MAGIC     order_items
+# MAGIC GROUP BY
+# MAGIC     product_id
+# MAGIC HAVING
+# MAGIC     item_count > 100
+# MAGIC ORDER BY
+# MAGIC     item_count desc 
 
 # COMMAND ----------
 
@@ -169,6 +197,18 @@
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC     o.order_id,
+# MAGIC     p.product_category_name,
+# MAGIC     oi.price
+# MAGIC FROM
+# MAGIC     orders as o
+# MAGIC     LEFT JOIN order_items as oi
+# MAGIC         ON o.order_id = oi.order_id
+# MAGIC     LEFT JOIN products as p
+# MAGIC         ON oi.product_id = p.product_id
+# MAGIC LIMIT 20
+# MAGIC
 
 # COMMAND ----------
 
@@ -215,9 +255,22 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 23
 # MAGIC %sql
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
+# MAGIC WITH AVG AS (
+# MAGIC     SELECT
+# MAGIC         order_items.product_id,
+# MAGIC         SUM(review_score)/COUNT(*) AS avg_scores
+# MAGIC     FROM
+# MAGIC         order_reviews AS ordr
+# MAGIC             LEFT JOIN order_items AS oi ON ordr.order_id = oi.order_id
+# MAGIC     GROUP BY
+# MAGIC         product_id
+# MAGIC )
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -280,4 +333,4 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC
