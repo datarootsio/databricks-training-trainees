@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Exercise 04: Dataset Exploration
 # MAGIC
@@ -40,8 +39,8 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Count orders per status and display the results
-# your code here
+# MAGIC %sql
+# MAGIC select order_status, count(*) as count from training_sanjay_issur.landing.orders group by order_status order by count desc
 
 # COMMAND ----------
 
@@ -59,8 +58,10 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Calculate the average delivery time in days across all delivered orders
-# your code here
+# MAGIC %sql
+# MAGIC SELECT round(avg(datediff(order_delivered_customer_date, order_purchase_timestamp)),2) as avg_delivery_days
+# MAGIC FROM training_sanjay_issur.landing.orders
+# MAGIC WHERE order_status = 'delivered'
 
 # COMMAND ----------
 
@@ -78,8 +79,16 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Top 10 product categories by total revenue
-# your code here
+# MAGIC %sql
+# MAGIC
+# MAGIC select p_en.product_category_name_english, round(sum(oi.price),2) as total_revenue
+# MAGIC FROM training_sanjay_issur.landing.order_items oi
+# MAGIC LEFT JOIN training_sanjay_issur.landing.products p
+# MAGIC on p.product_id = oi.product_id
+# MAGIC LEFT JOIN training_sanjay_issur.landing.product_category_name_translation p_en
+# MAGIC on  p.product_category_name = p_en.product_category_name
+# MAGIC GROUP BY p_en.product_category_name_english
+# MAGIC order by total_revenue desc
 
 # COMMAND ----------
 
@@ -95,8 +104,12 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Distribution of review scores — count per score value
-# your code here
+# MAGIC %sql
+# MAGIC select review_score, count(review_id)
+# MAGIC from training_sanjay_issur.landing.order_reviews
+# MAGIC where try_cast(review_score as int) in (1,2,3,4,5)
+# MAGIC group by review_score
+# MAGIC order by review_score asc
 
 # COMMAND ----------
 
@@ -119,8 +132,30 @@ from pyspark.sql import functions as F
 
 # COMMAND ----------
 
-# TODO: Late delivery rate per customer state, sorted by highest rate first
-# your code here
+# DBTITLE 1,Cell 12
+# MAGIC %sql
+# MAGIC select c.customer_state,
+# MAGIC sum(
+# MAGIC     case
+# MAGIC     when o.order_delivered_customer_date > o.order_estimated_delivery_date then 1
+# MAGIC     else 0
+# MAGIC     end
+# MAGIC     ) as count_late,
+# MAGIC count(o.order_id) as count_orders,
+# MAGIC round(100 * sum(
+# MAGIC     case
+# MAGIC     when o.order_delivered_customer_date > o.order_estimated_delivery_date then 1
+# MAGIC     else 0
+# MAGIC     end
+# MAGIC     ) / count(o.order_id), 2) as late_rate
+# MAGIC from training_sanjay_issur.landing.orders o
+# MAGIC left join training_sanjay_issur.landing.customers c
+# MAGIC on o.customer_id = c.customer_id
+# MAGIC where o.order_status = 'delivered'
+# MAGIC   and o.order_delivered_customer_date is not null
+# MAGIC   and o.order_estimated_delivery_date is not null
+# MAGIC group by c.customer_state
+# MAGIC order by late_rate desc
 
 # COMMAND ----------
 

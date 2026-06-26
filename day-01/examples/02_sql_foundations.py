@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 02 — SQL Foundations
 # MAGIC
@@ -19,8 +18,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_sanjay_issur`;
+# MAGIC USE SCHEMA bronze;
 # MAGIC -- Replace <name> with your own name (e.g., training_jan).
 
 # COMMAND ----------
@@ -53,6 +52,7 @@
 
 # MAGIC %sql
 # MAGIC -- All canceled orders, most recent first
+# MAGIC EXPLAIN
 # MAGIC SELECT
 # MAGIC   order_id,
 # MAGIC   order_purchase_timestamp

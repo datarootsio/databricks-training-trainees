@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 01: Python Basics
 # MAGIC
@@ -65,6 +64,18 @@ print("Description for 'shipped':", status_descriptions["shipped"])
 
 # YOUR CODE HERE
 
+orders_by_state = {
+  "SP": 100,
+  "RJ": 200,
+  "MG": 300,
+  "BA": 400,
+  "RS": 500
+}
+
+print(orders_by_state)
+print(len(orders_by_state))
+# --- Example: create a list of dicts from a Spark DataFrame ---}
+
 
 # COMMAND ----------
 
@@ -108,6 +119,7 @@ print(f"Delivery took {days} days")
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 7
 # TODO: Write a function called `categorize_review_score(score)` that accepts
 #       an integer score (1–5) and returns a string category:
 #         - score 1 or 2  -> "negative"
@@ -119,6 +131,19 @@ print(f"Delivery took {days} days")
 #           "Score 1 -> negative"
 
 # YOUR CODE HERE
+def categorize_review_score(score:int) -> str:
+    if score in [1, 2]:
+        return "negative"
+    elif score == 3:
+        return "neutral"
+    elif score in [4, 5]:
+        return "positive"
+    else:
+        "out of scope"
+
+
+print(categorize_review_score(9))
+
 
 
 # COMMAND ----------
@@ -186,6 +211,9 @@ state_order_counts = {
 }
 
 # YOUR CODE HERE
+for i in state_order_counts.items():
+    if i[1] > 1000:
+        print(f"{i[0]}: {i[1]} orders")
 
 
 # COMMAND ----------
@@ -224,7 +252,15 @@ print("Sorted descending:  ", sorted(order_values, reverse=True))
 review_scores = [4, 2, 5, 1, 3, 5, 4, 2]
 
 # YOUR CODE HERE
-
+avg_score = sum(review_scores) / len(review_scores)
+max_score = max(review_scores)
+min_score = min(review_scores)
+sorted_scores = sorted(review_scores, reverse=True)
+print(f"Average = '{avg_score}'")
+print(f"Max = '{max_score}'")
+print(f"Min = '{min_score}'")
+print(f"Sorted = '{sorted_scores}'")
+#}")
 
 # COMMAND ----------
 
@@ -293,4 +329,11 @@ state_revenue = {
 }
 
 # YOUR CODE HERE
+
+def top_states_by_revenue(state_revenue_dict, n=3):
+    top_states = sorted(state_revenue_dict.items(), key=lambda x: x[1], reverse=True)[:n]
+    return top_states
+
+top_states = top_states_by_revenue(state_revenue)
+print(f"Top states by revenue: '{top_states}")
 

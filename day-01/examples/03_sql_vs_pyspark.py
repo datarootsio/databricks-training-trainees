@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 · Demo 03 — SQL vs PySpark, Side by Side.
 # MAGIC
@@ -7,7 +6,7 @@
 # MAGIC the same engine and produce the same result. This demo runs each operation **both ways** so the
 # MAGIC class can see the one-to-one mapping. Every cell is fully worked.
 # MAGIC
-# MAGIC **Catalog/schema:** tables live in `training_<name>.landing`.
+# MAGIC **Catalog/schema:** tables live in `training_sanjay_issur.bronze`.
 
 # COMMAND ----------
 
@@ -20,10 +19,10 @@
 
 from pyspark.sql import functions as F
 
-orders = spark.table("training_<name>.landing.orders")
-order_items = spark.table("training_<name>.landing.order_items")
-customers = spark.table("training_<name>.landing.customers")
-products = spark.table("training_<name>.landing.products")
+orders = spark.table("training_sanjay_issur.bronze.orders")
+order_items = spark.table("training_sanjay_issur.bronze.order_items")
+customers = spark.table("training_sanjay_issur.bronze.customers")
+products = spark.table("training_sanjay_issur.bronze.products")
 
 # COMMAND ----------
 
@@ -36,7 +35,7 @@ products = spark.table("training_<name>.landing.products")
 
 # MAGIC %sql
 # MAGIC SELECT order_id, order_purchase_timestamp
-# MAGIC FROM training_<name>.landing.orders
+# MAGIC FROM training_sanjay_issur.bronze.orders
 # MAGIC WHERE order_status = 'shipped'
 # MAGIC LIMIT 10;
 
@@ -64,8 +63,8 @@ products = spark.table("training_<name>.landing.products")
 # MAGIC SELECT
 # MAGIC   c.customer_state,
 # MAGIC   COUNT(DISTINCT o.order_id) AS order_count
-# MAGIC FROM training_<name>.landing.orders o
-# MAGIC JOIN training_<name>.landing.customers c ON o.customer_id = c.customer_id
+# MAGIC FROM training_sanjay_issur.bronze.orders o
+# MAGIC JOIN training_sanjay_issur.bronze.customers c ON o.customer_id = c.customer_id
 # MAGIC GROUP BY c.customer_state
 # MAGIC ORDER BY order_count DESC;
 
@@ -95,8 +94,8 @@ products = spark.table("training_<name>.landing.products")
 # MAGIC   oi.order_id,
 # MAGIC   p.product_category_name,
 # MAGIC   oi.price
-# MAGIC FROM training_<name>.landing.order_items oi
-# MAGIC LEFT JOIN training_<name>.landing.products p ON oi.product_id = p.product_id
+# MAGIC FROM training_sanjay_issur.bronze.order_items oi
+# MAGIC LEFT JOIN training_sanjay_issur.bronze.products p ON oi.product_id = p.product_id
 # MAGIC LIMIT 20;
 
 # COMMAND ----------
@@ -124,8 +123,8 @@ products = spark.table("training_<name>.landing.products")
 # MAGIC   oi.product_id,
 # MAGIC   p.product_category_name,
 # MAGIC   ROUND(SUM(oi.price), 2) AS total_revenue
-# MAGIC FROM training_<name>.landing.order_items oi
-# MAGIC LEFT JOIN training_<name>.landing.products p ON oi.product_id = p.product_id
+# MAGIC FROM training_sanjay_issur.bronze.order_items oi
+# MAGIC LEFT JOIN training_sanjay_issur.bronze.products p ON oi.product_id = p.product_id
 # MAGIC GROUP BY oi.product_id, p.product_category_name
 # MAGIC ORDER BY total_revenue DESC
 # MAGIC LIMIT 5;

@@ -1,5 +1,4 @@
 # Databricks notebook source
-
 # MAGIC %md
 # MAGIC # Day 1 — Exercise 02: SQL Foundations
 # MAGIC
@@ -23,8 +22,8 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC USE CATALOG `training_<name>`;
-# MAGIC USE SCHEMA landing;
+# MAGIC USE CATALOG `training_sanjay_issur`;
+# MAGIC USE SCHEMA bronze;
 
 # COMMAND ----------
 
@@ -59,6 +58,13 @@
 # MAGIC %sql
 # MAGIC -- TODO A: find all canceled orders, most recent first
 # MAGIC -- YOUR QUERY HERE
+# MAGIC
+# MAGIC select
+# MAGIC order_id,
+# MAGIC order_purchase_timestamp
+# MAGIC from orders
+# MAGIC where order_status = "canceled"
+# MAGIC order by order_purchase_timestamp desc
 
 # COMMAND ----------
 
@@ -92,6 +98,10 @@
 # MAGIC %sql
 # MAGIC -- TODO B: average payment value per payment_type, rounded to 2 decimals
 # MAGIC -- YOUR QUERY HERE
+# MAGIC select payment_type, round(avg(payment_value), 2) as avg_payment_value
+# MAGIC from order_payments
+# MAGIC group by payment_type
+# MAGIC order by avg_payment_value desc
 
 # COMMAND ----------
 
@@ -127,6 +137,13 @@
 # MAGIC %sql
 # MAGIC -- TODO C: product_ids appearing in more than 100 order line items
 # MAGIC -- YOUR QUERY HERE
+# MAGIC SELECT
+# MAGIC   product_id,
+# MAGIC   COUNT(order_item_id) AS item_count
+# MAGIC FROM order_items
+# MAGIC GROUP BY product_id
+# MAGIC HAVING COUNT(order_item_id) > 100
+# MAGIC ORDER BY COUNT(order_item_id) DESC;
 
 # COMMAND ----------
 
@@ -166,9 +183,15 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 19
 # MAGIC %sql
 # MAGIC -- TODO D: join orders + order_items + products
 # MAGIC -- YOUR QUERY HERE
+# MAGIC select o.order_id, p.product_category_name, o.price 
+# MAGIC from order_items o
+# MAGIC join products p on o.product_id = p.product_id
+# MAGIC join order_items i on o.order_id = i.order_id
+# MAGIC limit 20
 
 # COMMAND ----------
 
@@ -280,4 +303,11 @@
 # MAGIC %sql
 # MAGIC -- TODO F: top-ranked customer per state using RANK() OVER (PARTITION BY ...)
 # MAGIC -- YOUR QUERY HERE
-
+# MAGIC select customer_unique_id, customer_state, order_count, rank() over (partition by customer_state order by order_count desc) as rank
+# MAGIC from (
+# MAGIC   select customer_unique_id, customer_state, count(*) as order_count
+# MAGIC   from orders
+# MAGIC   join customers using(customer_id)
+# MAGIC   group by customer_unique_id, customer_state
+# MAGIC )
+# MAGIC
