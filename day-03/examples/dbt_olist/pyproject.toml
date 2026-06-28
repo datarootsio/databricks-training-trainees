@@ -91,4 +91,4 @@ ignore_comment_clauses = true
 [tool.sqlfmt]
 line_length = 100
 # Skip generated / vendored SQL (sqlfmt doesn't read .sqlfluffignore).
-exclude = ["target/**/*.sql", "dbt_packages/**/*.sql", ".venv/**/*.sql", "logs/**/*.sql"]
+exclude = ["target/**/*.sql", "dbt_packages/**/*.sql", ".venv/**/*.sql", "logs/**/*.sql", "tests/generic/**/*.sql"]
