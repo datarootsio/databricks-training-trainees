@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- training repo hygiene (added) ---
+# macOS Finder junk
+.DS_Store
+
+# dbt build artifacts
+# dbt
+dbt_modules/
+.user.yml
+dbt_packages/
+logs/
+target/
+dbt_internal_packages/
+
+# editor
+.vscode/
