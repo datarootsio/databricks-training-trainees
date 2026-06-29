@@ -259,10 +259,10 @@
 # MAGIC %sql
 # MAGIC -- TODO E: CTE for average review score per product, filter avg >= 4.0
 # MAGIC -- YOUR QUERY HERE
-# MAGIC WITH AVG AS (
+# MAGIC WITH avg AS (
 # MAGIC     SELECT
-# MAGIC         order_items.product_id,
-# MAGIC         SUM(review_score)/COUNT(*) AS avg_scores
+# MAGIC         oi.product_id,
+# MAGIC         SUM(try_cast(review_score AS INT))/COUNT(*) AS avg_score
 # MAGIC     FROM
 # MAGIC         order_reviews AS ordr
 # MAGIC             LEFT JOIN order_items AS oi ON ordr.order_id = oi.order_id
@@ -270,7 +270,13 @@
 # MAGIC         product_id
 # MAGIC )
 # MAGIC
-# MAGIC
+# MAGIC SELECT
+# MAGIC     product_id,
+# MAGIC     avg_score
+# MAGIC FROM 
+# MAGIC     avg
+# MAGIC WHERE
+# MAGIC     avg_score >= 4.0
 
 # COMMAND ----------
 
