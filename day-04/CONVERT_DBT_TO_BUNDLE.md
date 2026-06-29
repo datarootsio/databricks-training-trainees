@@ -41,9 +41,9 @@ reference init folder as you like).
 
 ```
 dbt_olist_bundle/
-  databricks.yml                     # bundle: name, targets (local/dev/prod), variables, artifacts — §5a
+  databricks.yml                     # bundle: name, targets (local/dev/prod), presets/tags — §5a
   resources/
-    dbt_olist_bundle.job.yml         # the Job: best-practice DAG (dbt build → quality → export) — §5b
+    dbt_olist_bundle.job.yml         # the Job: one dbt task on a job cluster (dbt build) — §5b
   dbt_project.yml                    # Day-3 content; name/profile=dbt_olist_bundle; paths → src/
   profiles.yml                       # SINGLE file: local (PAT) + dev/prod (job) targets
   packages.yml                       # Day-3 (dbt_utils, dbt_expectations)
@@ -59,9 +59,6 @@ dbt_olist_bundle/
     snapshots/ orders_snapshot.sql
     tests/   assert_no_future_orders.sql  generic/not_in_future.sql
     analyses/                                # (optional, empty)
-  tasks/                             # (optional) uv package for the wheel DAG — §5b. Skip for a dbt-only job.
-    pyproject.toml                   #   [project.scripts]: quality-check, export-report
-    src/olist_tasks/…                #   the Python modules the wheel tasks call
   README.md  DATA_MODELLING.md  VSCODE_DBT_SETUP.md
 ```
 
@@ -136,9 +133,16 @@ models:
     +persist_docs:
       relation: true
       columns: true
-    staging:      {+materialized: view,  +schema: staging}
-    intermediate: {+materialized: view,  +schema: intermediate}
-    marts:        {+materialized: table, +file_format: delta, +schema: marts}
+    staging: 
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +file_format: delta
+      +schema: marts
 
 seeds:
   dbt_olist_bundle:               # was 'dbt_olist'  ← rename this key
@@ -237,18 +241,11 @@ bundle:
 include:
   - resources/dbt_olist_bundle.job.yml
 
-# Build downstream task code into a VERSIONED WHEEL from ./tasks. The dbt project stays
-# package-less; only the Python tasks become a wheel. (Omit this block for a dbt-only job.)
-artifacts:
-  olist_tasks:
-    type: whl
-    build: uv build --wheel
-    path: ./tasks
-
 variables:
-  catalog:
-    description: "Unity Catalog catalog the gold tables live in"
-    default: "training_${workspace.current_user.short_name}"
+  service_principal:
+    description: "The OIDC service principal used to deploy the bundle in CI"
+    default: "${env.DATABRICKS_CLIENT_ID}"
+
 
 targets:
   local:                                   # deploy from YOUR laptop; the job runs as YOU
@@ -256,52 +253,46 @@ targets:
     default: true
     workspace:
       host: https://adb-dev.azuredatabricks.net
-    variables:
-      catalog: "training_${workspace.current_user.short_name}"
     presets:
       name_prefix: "${workspace.current_user.short_name}_"   # personal deploys never collide
       trigger_pause_status: PAUSED
       tags:
         environment: "${bundle.target}"
         managed_by: dabs
-    run_as: "${workspace.current_user.userName}"  # run as YOU, not the CI OIDC service principal
+    run_as: "${workspace.current_user.userName}"  # run as YOU
   dev:                                     # prod-like TEST env, deployed by CI (OIDC)
     mode: production                       # runs as the DEPLOYING principal; schedule active; no prefix
     workspace:
       host: https://adb-dev.azuredatabricks.net
-    variables:
-      catalog: "${bundle.target}_olist"
     presets:
       trigger_pause_status: UNPAUSED
       tags:
         environment: "${bundle.target}"
         managed_by: dabs
-    # run_as: "${bundle.service_principal}"  # run as the CI OIDC service principal
+    # run_as: "<ci-service-principal-app-id>"   # CI deploys/runs as the OIDC service principal
   prod:
     mode: production
     workspace:
-      host: https://adb-dev.azuredatabricks.net
-    variables:
-      catalog: "${bundle.target}_olist"
+      host: https://adb-prod.azuredatabricks.net   # prod workspace (different from dev)
     presets:
       trigger_pause_status: UNPAUSED
       tags:
         environment: "${bundle.target}"
         managed_by: dabs
-    # run_as: "${bundle.service_principal}"  # run as the CI OIDC service principal
+    # run_as: "<ci-service-principal-app-id>"
 ```
 
 Why these are the best‑practice choices:
 - **`include` only the active job.** Globbing in a second resource that reuses the job key collides — keep illustrations out, or give them a unique key.
 - **`mode: development` (local) vs `mode: production` (dev/prod).** Development prefixes resources (`[dev you]`) and pauses schedules so personal deploys are safe; production deploys clean with active schedules.
-- **`run_as` is usually unnecessary.** With `mode: production` the job runs as the **deploying principal** — in CI that's your **OIDC service principal** (`DATABRICKS_CLIENT_ID`), whose token Databricks injects as `DBT_ACCESS_TOKEN`. Add an explicit `run_as` only to force a different identity.
+- **`run_as`.** `local` pins `run_as: ${workspace.current_user.userName}` so the deployed job — and the `DBT_ACCESS_TOKEN` injected into the dbt task — run as *you*. `dev`/`prod` use `mode: production`, which runs as the **deploying principal** (in CI, the OIDC service principal `DATABRICKS_CLIENT_ID`); leave their `run_as` commented unless you need to pin a specific SP.
 - **`presets.name_prefix` on local** = your short name, so two people deploying `local` never clobber each other; **`presets.tags`** merge with resource‑level tags (cost/ownership attribution).
-- **`variables.catalog` per target.** ⚠️ The catalog is *also* set in the **dbt profile** (where dbt writes). **Keep the two equal per target — especially `local`** — or the downstream wheel tasks read `${var.catalog}` while dbt wrote to a different catalog.
+- **No `artifacts` / `variables`.** This is a **dbt‑only** bundle: no wheel to build, and the **catalog is owned by the dbt profile** (§4), so the bundle needs no catalog variable — one source of truth, no drift.
 
 ### 5b. `resources/dbt_olist_bundle.job.yml`
 
-Best practice is a small **DAG** that exercises the three compute types. The two wheel tasks are
-optional — see the minimal (dbt‑only) variant below.
+A single **dbt task** running on a classic **job cluster** — dbt‑only (no Python/wheel tasks, no
+serverless environment).
 
 ```yaml
 resources:
@@ -312,7 +303,7 @@ resources:
         managed_by: dabs
         data_source: olist                       # merges with target presets.tags
       schedule:
-        quartz_cron_expression: "0 30 6 * * ?"    # 06:30 — paused in dev (mode preset), active in prod
+        quartz_cron_expression: "0 30 6 * * ?"    # 06:30 — paused for local, active for dev/prod (trigger_pause_status)
         timezone_id: Europe/Zurich
 
       tasks:
@@ -349,24 +340,22 @@ resources:
 ```
 
 Why:
-- **Two computes, on purpose** (good slide): dbt CLI = **Job Compute**; model SQL = **SQL warehouse** (the profile's `http_path`, *not* a `warehouse_id` on the task)
-- **`depends_on` builds the DAG** — the quality gate runs after `dbt_build` and fails the run before `export_report`.
-- **`python_wheel_task`**: `entry_point` must match a `[project.scripts]` name in `tasks/pyproject.toml`; `package_name` = the wheel's `name`; `libraries: whl` = the `artifacts` output (`./tasks/dist/*.whl`).
-- **`schedule`** = quartz cron + timezone; the target `mode` preset pauses it in dev, activates in prod.
-- **No separate `dbt seed`** — `dbt build` already seeds (then runs, snapshots, tests). `source freshness`/`docs generate` aren't part of `build`; add them as extra commands if you want them in the job.
+- **Two computes, on purpose** (good slide): the **dbt CLI** runs on the **job cluster**; the **model SQL** it generates runs on the **SQL warehouse** from the profile's `http_path` (*not* a `warehouse_id` on the task).
+- **dbt installed on the task** via `libraries: pypi: dbt-databricks` (which pulls a compatible `dbt-core`). This is the **classic job‑cluster** pattern — no serverless `environments:` block. Your dbt **packages** (`dbt_utils`/`dbt_expectations`) still install at runtime from `dbt deps` (`packages.yml`).
+- **`schedule`** = quartz cron + timezone; `trigger_pause_status` (in `presets`) pauses it for `local` and activates it for `dev`/`prod`.
+- **Commands**: `dbt debug` (connection check) → `dbt deps` (reads `packages.yml`; ignores `--target`) → `dbt build --target ${bundle.target}` — `build` already runs seed + run + snapshot + test, so **no separate `dbt seed`**. (`source freshness`/`docs generate` aren't part of `build`; add them as extra commands if you want them.)
 
-**Minimal variant (dbt‑only job):** if you're not adding the `tasks/` package, drop tasks 2 & 3, the
-`job_clusters:` block, and the `artifacts:` block in `databricks.yml`. You're left with just
-`dbt_build` + `environments` — a complete, working bundle.
+### 5c. Further reading (not used here)
 
-### 5c. Git‑source instead of a wheel (alternative)
+We keep this bundle **dbt‑only** — no Python/wheel tasks and no Git‑sourced tasks. If you ever need
+them, the docs cover it:
 
-Rather than building/shipping a wheel, you can point tasks at code fetched from Git at run time
-(`git_source:` on the job + `source: GIT` on the task; pin a `git_tag` for prod). It's an
-**either/or** with the wheel — don't wire both into one job, and don't `include` two resources that
-reuse the same job key. Databricks now recommends **workspace source** (the deployed bundle files)
-over `git_source` for bundles, so prefer the wheel unless you specifically want the
-monorepo/release‑branch flow.
+- **Pin a release for prod** — instead of deploying the working tree, point a job's tasks at a Git
+  ref and pin a `git_tag` (e.g. `v0.1.0`) for prod while `dev` tracks a branch:
+  [Run a job from Git / bundles](https://docs.databricks.com/aws/en/dev-tools/bundles/) ·
+  [dbt task for jobs](https://learn.microsoft.com/en-us/azure/databricks/jobs/dbt).
+- **Python wheel tasks** — build & ship a wheel for non‑dbt steps via `artifacts` + `python_wheel_task`:
+  [Python wheel in bundles](https://docs.databricks.com/aws/en/dev-tools/bundles/python-wheel).
 
 ---
 
@@ -381,9 +370,8 @@ monorepo/release‑branch flow.
   - `pyproject.toml` `[tool.sqlfmt] exclude`: `tests/generic/**/*.sql` → `src/tests/generic/**/*.sql`
   - lint/format commands in docs: `sqlfluff lint models` → `sqlfluff lint src/models`
 - **packages.yml / package-lock.yml**: keep both at the root, unchanged.
-- **Wheel tasks (only if you use the DAG):** the `tasks/` package is its **own** uv project (own
-  `pyproject.toml`); the bundle's `artifacts:` builds it on deploy (§5b). The dbt project itself
-  stays package‑less.
+- **Job‑runtime dbt**: the deployed job installs `dbt-databricks` via the task's `libraries: pypi`
+  (§5b) — not from your local uv env — and pulls dbt **packages** via `dbt deps` (`packages.yml`).
 
 ---
 
@@ -440,6 +428,9 @@ the `uv …` lines are identical.
 # macOS / Linux
 set -a; source .env; set +a          # load DATABRICKS_HOST / HTTP_PATH / TOKEN / DBT_USER
 uv sync
+uv run sqlfmt .
+uv run sqlfluff lint src/models src/tests src/snapshots
+uv run sqlfluff fix src/models src/tests src/snapshots
 uv run dbt deps
 uv run dbt build                      # target=local by default; builds from src/ now
 ```
@@ -451,6 +442,10 @@ Get-Content .env | Where-Object { $_ -and $_ -notmatch '^\s*#' } | ForEach-Objec
     [Environment]::SetEnvironmentVariable($name.Trim(), $value.Trim(), 'Process')
 }
 uv sync
+uv run sqlfmt .
+uv run sqlfluff lint src/models src/tests src/snapshots
+uv run sqlfluff fix src/models src/tests src/snapshots
+uv run sql
 uv run dbt deps
 uv run dbt build
 ```
@@ -462,8 +457,8 @@ PowerShell**:
 
 ```bash
 databricks bundle validate            # catches path / naming / schema errors
-databricks bundle deploy -t dev       # deploys the job to your workspace (uses your CLI auth)
-databricks bundle run dbt_olist_bundle_job -t dev
+databricks bundle deploy -t local       # deploys the job to your workspace (uses your CLI auth)
+databricks bundle run dbt_olist_bundle_job -t local
 ```
 
 `validate` is the cheap gate — run it after every edit in §3–§8. `run` executes the deployed dbt
@@ -493,6 +488,7 @@ project is now the real bundle.
 - We did **not** rebuild the project inside the init skeleton (we'd have lost tests/snapshots/docs).
 - We did **not** keep the template's split `dbt_profiles/` (single root file by choice).
 - We did **not** change any SQL — only locations (`→ src/`) and config names.
+- We kept it **dbt‑only** — no Python/wheel tasks, no serverless environment, no Git‑sourced tasks (see §5c for pointers).
 
 ### Sources
 - [dbt task for jobs — Databricks](https://learn.microsoft.com/en-us/azure/databricks/jobs/dbt) (DBT_HOST / DBT_ACCESS_TOKEN injection)
