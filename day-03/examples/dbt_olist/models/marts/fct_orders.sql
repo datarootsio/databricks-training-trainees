@@ -6,9 +6,7 @@
     file_format          = 'delta'
 ) }}
 
-with base as (
-    select * from {{ ref('int_orders_enriched') }}
-)
+with base as (select * from {{ ref('int_orders_enriched') }})
 select
     {{ dbt_utils.generate_surrogate_key(['order_id']) }} as order_sk,
     order_id,
@@ -30,6 +28,6 @@ select
     is_late
 from base
 {% if is_incremental() %}
-  -- only process orders newer than the latest already loaded
-  where order_purchase_ts > (select max(order_purchase_ts) from {{ this }})
+    -- only process orders newer than the latest already loaded
+    where order_purchase_ts > (select max(order_purchase_ts) from {{ this }})
 {% endif %}
