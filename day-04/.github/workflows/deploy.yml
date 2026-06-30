@@ -10,7 +10,9 @@ name: Deploy
 # Promotion is gated by environment approval — no release tags, no versioning.
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feature/han-solutions
   workflow_dispatch:
 
 permissions:
