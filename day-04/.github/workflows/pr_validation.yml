@@ -56,12 +56,22 @@ jobs:
         run: uv sync
       - name: Vendor dbt packages (dbt_utils / dbt_expectations)
         run: uv run dbt deps
-      - name: Resolve dbt connection (mint token from the M2M creds)
+      - name: Resolve dbt connection (mint an M2M OAuth token)
+        # `databricks auth token` is for U2M logins; for M2M we mint a token directly from the
+        # SP's client credentials (client_credentials grant against the workspace token endpoint).
         run: |
+          HOST="$(echo "$DATABRICKS_HOST" | sed -E 's#/$##')"            # full https URL, no trailing slash
+          TOKEN="$(curl -sf -u "$DATABRICKS_CLIENT_ID:$DATABRICKS_CLIENT_SECRET" \
+            --data 'grant_type=client_credentials' --data 'scope=all-apis' \
+            "$HOST/oidc/v1/token" | jq -r .access_token)"
+          echo "::add-mask::$TOKEN"
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Failed to mint an M2M token — check the SP client id/secret and its workspace access."; exit 1
+          fi
           {
-            echo "DBT_HOST=$(echo "$DATABRICKS_HOST" | sed -E 's#^https?://##; s#/$##')"
-            echo "DBT_ACCESS_TOKEN=$(databricks auth token | jq -r .access_token)"
-            echo "DBT_HTTP_PATH=/sql/1.0/warehouses/3e5b6674e311a1ff"   # dev SQL warehouse
+            echo "DBT_HOST=$(echo "$HOST" | sed -E 's#^https?://##')"
+            echo "DBT_ACCESS_TOKEN=$TOKEN"
+            echo "DBT_HTTP_PATH=/sql/1.0/warehouses/3e5b6674e311a1ff"    # dev SQL warehouse
             echo "DBT_CATALOG=dev_olist"
           } >> "$GITHUB_ENV"
       - name: SQLFluff lint
