@@ -74,3 +74,69 @@ models:
               arguments:
                 min_value: 0
                 max_value: 100
+
+  - name: gld_customer_cohorts
+    description: "Case 2 - customers grouped by first-order month; repeat rate and avg lifetime value."
+    columns:
+      - name: cohort_month
+        description: "Month of the customer's first order (cohort grain)."
+        tests: [not_null, unique]
+      - name: n_customers
+        description: "Number of customers in the cohort."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: n_repeat_customers
+        description: "Number of customers in the cohort who have made more than one purchase."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: repeat_customer_pct
+        description: "Percent of the cohort that ordered more than once (0-100)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: avg_lifetime_value
+        description: "Average lifetime value of the cohort (sum of all orders per customer)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+
+  - name: gld_review_sentiment_by_category
+    description: "Case 3 - per English product category: n_reviews, avg score, % 1-star, % 5-star."
+    columns:
+      - name: category
+        description: "English product category (one row per category)."
+        tests: [not_null, unique]
+      - name: n_reviews
+        description: "Number of reviews for the category."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: avg_review_score
+        description: "Average review score for the category (1-5)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: pct_1_star
+        description: "Percent of reviews that are 1-star (0-100)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: pct_5_star
+        description: "Percent of reviews that are 5-star (0-100)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
