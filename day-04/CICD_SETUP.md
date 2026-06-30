@@ -17,6 +17,13 @@ federation). No Python checks, no Lakeflow, no release/versioning.
 
 Promotion dev → prod is gated by **GitHub Environment approval** — not git tags or releases.
 
+> **Why even the lint job needs dev access:** SQLFluff uses the **dbt templater**, which *compiles*
+> models — and the incremental `fct_orders` checks whether its table exists, so it opens a real
+> warehouse connection. The `sql-lint` job therefore also runs in the `dev` environment, mints a
+> token from the OIDC session (`databricks auth token`), and points dbt at the dev warehouse
+> (read‑only metadata; the tables don't need to exist). So the dev SP's warehouse + `dev_olist`
+> access from §1 is required for PR checks too, not just deploys.
+
 ---
 
 ## 1. Databricks side (per environment: dev, prod)

@@ -36,25 +36,34 @@ jobs:
         run: databricks bundle validate -t dev
 
   # 2) SQL code quality — SQLFluff lint (gate) + sqlfmt format check.
-  # Tools read their config from pyproject.toml; CI only passes paths. No real Databricks creds:
-  # the dbt templater only PARSES the profile to compile models, so dummy DBT_* env is enough.
+  # SQLFluff's dbt templater COMPILES models (incremental models check relation existence), so it
+  # needs a REAL warehouse connection — not dummy creds. We reuse the dev OIDC session and mint a token.
   sql-lint:
     runs-on: ubuntu-latest
+    environment: dev       # gives the OIDC dev secrets — the dbt templater needs a REAL connection
     defaults:
       run:
         working-directory: dbt_olist_bundle
     env:
-      DBT_HOST:         dummy.cloud.databricks.com
-      DBT_ACCESS_TOKEN: dummy
-      DBT_HTTP_PATH:    /sql/1.0/warehouses/dummy
-      DBT_CATALOG:      dummy
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST:      ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
       - uses: astral-sh/setup-uv@v5
       - name: Install tooling (sqlfluff, sqlfmt, dbt) from pyproject
         run: uv sync
       - name: Vendor dbt packages (dbt_utils / dbt_expectations)
         run: uv run dbt deps
+      - name: Resolve dbt connection from the OIDC session
+        run: |
+          {
+            echo "DBT_HOST=$(echo "$DATABRICKS_HOST" | sed -E 's#^https?://##; s#/$##')"
+            echo "DBT_ACCESS_TOKEN=$(databricks auth token | jq -r .access_token)"
+            echo "DBT_HTTP_PATH=/sql/1.0/warehouses/3e5b6674e311a1ff"   # dev SQL warehouse
+            echo "DBT_CATALOG=dev_olist"
+          } >> "$GITHUB_ENV"
       - name: SQLFluff lint
         run: uv run sqlfluff lint src/models src/tests src/snapshots   # matches local; src/tests/generic is in .sqlfluffignore
       - name: sqlfmt format check
