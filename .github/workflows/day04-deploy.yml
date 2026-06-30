@@ -7,7 +7,9 @@ name: Day04 Deploy
 # day-04/.github/workflows/ is illustrative and does NOT run.
 on:
   push:
-    branches: [main]
+    branches: 
+      - main
+      - feature/han-solutions
     paths: ["day-04/dbt_olist_bundle/**"]   # only when the day-04 bundle changes
   workflow_dispatch:
 
